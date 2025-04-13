@@ -28,35 +28,8 @@ func NewRouter() *gin.Engine {
 	router.Use(sessions.Sessions("session_store", store))
 
 	// Initialize controllers
-	appController := controllers.NewAppController()
-
-	// Configure routes
-	setupAppRoutes(router, appController)
-	setupAPIRoutes(router, httpClient)
+	appController := controllers.NewAppController(httpClient)
+	appController.GetRoutes(&router.RouterGroup)
 
 	return router
-}
-
-// setupAppRoutes configures basic application health and info routes.
-func setupAppRoutes(router *gin.Engine, appController *controllers.AppController) {
-	router.GET("/", appController.Index)
-	router.GET("/health", appController.Health)
-	router.GET("/whoami", appController.WhoAmI)
-}
-
-// setupAPIRoutes configures all API routes with their respective controllers.
-func setupAPIRoutes(router *gin.Engine, httpClient *http.Client) {
-	// API versioning group
-	api := router.Group("/api/v1")
-
-	// Stripe routes
-	stripeGroup := api.Group("/stripe")
-	stripeController := controllers.NewStripeController(stripeGroup.BasePath())
-	stripeGroup.POST("/webhook", stripeController.Webhook)
-
-	// Plex routes
-	plexGroup := api.Group("/plex")
-	plexController := controllers.NewPlexController(plexGroup.BasePath(), httpClient)
-	plexGroup.GET("/auth", plexController.Authenticate)
-	plexGroup.GET("/callback", plexController.Callback)
 }
