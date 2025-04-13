@@ -14,6 +14,6 @@ var DB *gorm.DB
 // Connect initializes the database connection and sets the global DB variable
 func Connect() {
 	var err error
-	DB, err = gorm.Open(postgres.Open(config.GetConfig().GetString("database.dsn")), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(config.Config.GetString("database.dsn")), &gorm.Config{})
 	L.PanicIf(err, `gorm.Open`, err)
 }
