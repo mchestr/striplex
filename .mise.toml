@@ -1,3 +1,3 @@
 [env]
 STRIPLEX_SERVER__MODE="debug"
-_.file = ".env.toml"
+_.file = ".env"
