@@ -9,17 +9,11 @@ import (
 )
 
 // DB is the global database connection instance
-var db *gorm.DB
+var DB *gorm.DB
 
 // Connect initializes the database connection and sets the global DB variable
-func Connect() *gorm.DB {
+func Connect() {
 	var err error
-	db, err = gorm.Open(postgres.Open(config.GetConfig().GetString("postgres.dsn")), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(config.GetConfig().GetString("database.dsn")), &gorm.Config{})
 	L.PanicIf(err, `gorm.Open`, err)
-	return db
-}
-
-// GetDB returns the global database connection
-func GetDB() *gorm.DB {
-	return db
 }

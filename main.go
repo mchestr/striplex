@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"striplex/config"
+	"striplex/db"
 	"striplex/server"
 )
 
@@ -17,5 +18,6 @@ func main() {
 	}
 	flag.Parse()
 	config.Init(*environment)
+	db.Connect()
 	server.Init()
 }
