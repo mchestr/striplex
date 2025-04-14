@@ -15,7 +15,6 @@ import (
 // PlexService handles interactions with the Plex Media Server API
 type PlexService struct {
 	client   *http.Client
-	baseURL  string
 	token    string
 	serverID string
 }
@@ -24,7 +23,6 @@ type PlexService struct {
 func NewPlexService(client *http.Client) *PlexService {
 	return &PlexService{
 		client:   client,
-		baseURL:  config.Config.GetString("plex.url"),
 		token:    config.Config.GetString("plex.token"),
 		serverID: config.Config.GetString("plex.server_id"),
 	}
