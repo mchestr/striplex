@@ -6,7 +6,7 @@ import (
 	"striplex/config"
 	"striplex/db"
 	"striplex/model"
-	"time"
+	"striplex/services"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -17,20 +17,18 @@ import (
 )
 
 type AppController struct {
-	client *http.Client
+	client   *http.Client
+	services *services.Services
 }
 
-func NewAppController(client *http.Client) *AppController {
+func NewAppController(client *http.Client, services *services.Services) *AppController {
 	return &AppController{
-		client: client,
+		client:   client,
+		services: services,
 	}
 }
 
 func (c *AppController) GetRoutes(r *gin.RouterGroup) {
-	client := http.Client{
-		Timeout: 10 * time.Second,
-	}
-
 	r.GET("/health", c.Health)
 	r.GET("/whoami", c.WhoAmI)
 	r.GET("/logout", c.Logout)
@@ -38,19 +36,19 @@ func (c *AppController) GetRoutes(r *gin.RouterGroup) {
 
 	api := r.Group("/api")
 	{
-		apiController := apicontroller.NewApiController(api.BasePath(), &client)
+		apiController := apicontroller.NewApiController(api.BasePath(), c.client, c.services)
 		apiController.GetRoutes(api)
 	}
 
 	plex := r.Group("/plex")
 	{
-		plexController := plexcontroller.NewPlexController(plex.BasePath(), &client)
+		plexController := plexcontroller.NewPlexController(plex.BasePath(), c.client, c.services)
 		plexController.GetRoutes(plex)
 	}
 
 	stripe := r.Group("/stripe")
 	{
-		stripeController := stripecontroller.NewStripeController(stripe.BasePath(), &client)
+		stripeController := stripecontroller.NewStripeController(stripe.BasePath(), c.client, c.services)
 		stripeController.GetRoutes(stripe)
 	}
 }

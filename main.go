@@ -8,6 +8,8 @@ import (
 	"striplex/config"
 	"striplex/db"
 	"striplex/server"
+
+	"github.com/stripe/stripe-go/v82"
 )
 
 func main() {
@@ -18,6 +20,8 @@ func main() {
 	}
 	flag.Parse()
 	config.Init(*environment)
+
+	stripe.Key = config.Config.GetString("stripe.secret_key")
 	db.Connect()
 	server.Init()
 }

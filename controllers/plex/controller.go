@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"striplex/config"
 	"striplex/model"
+	"striplex/services"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -20,13 +21,15 @@ import (
 type PlexController struct {
 	basePath string
 	client   *http.Client
+	services *services.Services
 }
 
 // NewPlexController creates a new PlexController instance.
-func NewPlexController(basePath string, client *http.Client) *PlexController {
+func NewPlexController(basePath string, client *http.Client, services *services.Services) *PlexController {
 	return &PlexController{
 		basePath: basePath,
 		client:   client,
+		services: services,
 	}
 }
 

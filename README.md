@@ -20,16 +20,22 @@ striplex
 │   ├── default.yaml       # Default configuration values
 │   └── development.yaml   # Development environment settings
 ├── controllers/           # Request handlers
-│   ├── app.go             # Core application endpoints
-│   ├── plex.go            # Plex authentication handlers
-│   └── stripe.go          # Stripe webhook handlers
+│   ├── app/               # Core application endpoints
+│   │   └── controller.go  # App controller implementation
+│   ├── plex/              # Plex authentication handlers
+│   │   └── controller.go  # Plex controller implementation
+│   └── stripe/            # Stripe payment handlers
+│       └── controller.go  # Stripe controller implementation
 ├── db/                    # Database connection logic
 │   └── db.go              # Database initialization
 ├── model/                 # Data models
 │   ├── discord_token.go   # Discord authentication token model
 │   ├── discord_user.go    # Discord user model
 │   ├── plex_token.go      # Plex authentication token model
+│   ├── user_info.go       # User information model
 │   └── plex_user.go       # Plex user model
+├── services/              # Service implementations
+│   └── wizarr.go          # Wizarr service for Plex invitations
 ├── server/                # HTTP server setup
 │   ├── router.go          # Route definitions
 │   └── server.go          # Server initialization
@@ -111,12 +117,20 @@ docker run -p 8080:8080 --env-file .env striplex
 
 ### Plex Authentication
 
-- `GET /api/v1/plex/auth` - Initiate Plex authentication
-- `GET /api/v1/plex/callback` - Plex authentication callback
+- `GET /plex/auth` - Initiate Plex authentication
+- `GET /plex/callback` - Plex authentication callback
 
 ### Stripe
 
-- `POST /api/v1/stripe/webhook` - Stripe webhook endpoint for subscription events
+- `POST /stripe/webhook` - Stripe webhook endpoint for subscription events
+- `GET /stripe/checkout` - Create a Stripe checkout session for subscription
+- `GET /stripe/success` - Handle successful subscription checkout
+- `GET /stripe/cancel` - Handle cancelled subscription checkout
+
+### Wizarr Integration
+
+- Automatic generation of Plex server invites through Wizarr after successful subscription
+- Email delivery of invitation links to subscribers
 
 ## Configuration
 

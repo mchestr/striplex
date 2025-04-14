@@ -1,9 +1,9 @@
 package config
 
 import (
+	"log/slog"
 	"strings"
 
-	"github.com/kokizzu/gotro/L"
 	"github.com/spf13/viper"
 )
 
@@ -13,28 +13,40 @@ var Config *viper.Viper
 // (external lib) and returns the configuration struct.
 func Init(env string) {
 	var err error
-	Config = viper.New()
-	setDefaults()
-	Config.SetConfigType("yaml")
-	Config.SetConfigName("default")
-	Config.AddConfigPath("config/")
-	Config.SetEnvPrefix("striplex")
-	Config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
-	Config.SetConfigType("env")
-	Config.AutomaticEnv()
-	err = Config.ReadInConfig()
-	L.PanicIf(err, "error on parsing default environment configuration file", err)
+
+	// Merge the environment configuration file
+	defaultFileConfig := viper.New()
+	defaultFileConfig.AddConfigPath("config/")
+	defaultFileConfig.SetConfigName("default")
+	if err = defaultFileConfig.ReadInConfig(); err != nil {
+		slog.Error("error on parsing default configuration file", "error", err)
+		panic(err)
+	}
 
 	// Merge the environment configuration file
 	envFileConfig := viper.New()
-	envFileConfig.SetConfigType("yaml")
 	envFileConfig.AddConfigPath("config/")
 	envFileConfig.SetConfigName(env)
-	err = envFileConfig.ReadInConfig()
-	L.PanicIf(err, "error on parsing environment configuration file", err)
+	if err = envFileConfig.ReadInConfig(); err != nil {
+		slog.Error("error on parsing environment configuration file", "env", env, "error", err)
+		panic(err)
+	}
 
-	err = Config.MergeConfigMap(envFileConfig.AllSettings())
-	L.PanicIf(err, "error on merging environment configuration file", err)
+	if err = defaultFileConfig.MergeConfigMap(envFileConfig.AllSettings()); err != nil {
+		slog.Error("error on merging configuration file", "env", env, "error", err)
+		panic(err)
+	}
+
+	Config = viper.New()
+	if err = Config.MergeConfigMap(defaultFileConfig.AllSettings()); err != nil {
+		slog.Error("error on merging default configuration", "error", err)
+		panic(err)
+	}
+	Config.SetConfigType("env")
+	Config.SetEnvPrefix("striplex")
+	Config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
+	Config.AutomaticEnv()
+	setDefaults()
 }
 
 func setDefaults() {

@@ -5,24 +5,29 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"striplex/config"
 	"striplex/model"
+	"striplex/services"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v82"
 	StripeSession "github.com/stripe/stripe-go/v82/checkout/session"
+	"github.com/stripe/stripe-go/v82/customer"
 )
 
 type StripeController struct {
 	basePath string
 	client   *http.Client
+	services *services.Services
 }
 
-func NewStripeController(basePath string, client *http.Client) *StripeController {
+func NewStripeController(basePath string, client *http.Client, services *services.Services) *StripeController {
 	return &StripeController{
 		basePath: basePath,
 		client:   client,
+		services: services,
 	}
 }
 func (s *StripeController) GetRoutes(r *gin.RouterGroup) {
@@ -65,9 +70,6 @@ func (s *StripeController) CreateCheckoutSession(c *gin.Context) {
 		return
 	}
 
-	// Initialize Stripe with the API key
-	stripe.Key = config.Config.GetString("stripe.secret_key")
-
 	// Set success and cancel URLs
 	successURL := fmt.Sprintf("https://%s%s/success", config.Config.GetString("server.hostname"), s.basePath)
 	cancelURL := fmt.Sprintf("https://%s%s/cancel", config.Config.GetString("server.hostname"), s.basePath)
@@ -78,6 +80,26 @@ func (s *StripeController) CreateCheckoutSession(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing price_id parameter"})
 		return
 	}
+
+	// Create a Stripe customer first with Plex user metadata
+	customerParams := &stripe.CustomerParams{
+		Email: stripe.String(userInfoData.Email),
+		Name:  stripe.String(userInfoData.Username),
+		Metadata: map[string]string{
+			"plex_user_id":  strconv.Itoa(userInfoData.ID),
+			"plex_username": userInfoData.Username,
+			"plex_email":    userInfoData.Email,
+		},
+	}
+
+	customer, err := customer.New(customerParams)
+	if err != nil {
+		slog.Error("Failed to create customer", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Stripe customer"})
+		return
+	}
+
+	slog.Info("Created Stripe customer", "customer_id", customer.ID, "email", customer.Email)
 
 	// Create checkout session parameters
 	params := &stripe.CheckoutSessionParams{
@@ -90,10 +112,10 @@ func (s *StripeController) CreateCheckoutSession(c *gin.Context) {
 				Quantity: stripe.Int64(1),
 			},
 		},
-		Mode:          stripe.String(string(stripe.CheckoutSessionModeSubscription)),
-		SuccessURL:    stripe.String(successURL),
-		CancelURL:     stripe.String(cancelURL),
-		CustomerEmail: stripe.String(userInfoData.Email),
+		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		SuccessURL: stripe.String(successURL),
+		CancelURL:  stripe.String(cancelURL),
+		Customer:   stripe.String(customer.ID),
 	}
 
 	// Create the checkout session
@@ -114,12 +136,11 @@ func (s *StripeController) SuccessSubscription(c *gin.Context) {
 	session := sessions.Default(c)
 	userInfo := session.Get("user_info")
 
-	var username string
+	var plexUser model.UserInfo
 	if userInfo != nil {
-		var plexUser model.UserInfo
 		if byteData, ok := userInfo.(string); ok {
-			if err := json.Unmarshal([]byte(byteData), &plexUser); err == nil && plexUser.Username != "" {
-				username = plexUser.Username
+			if err := json.Unmarshal([]byte(byteData), &plexUser); err != nil {
+				slog.Error("failed to unmarshal user info", "error", err)
 			}
 		}
 	}
@@ -190,12 +211,18 @@ func (s *StripeController) SuccessSubscription(c *gin.Context) {
         <div class="success-icon">✓</div>
         <h1>Subscription Successful!</h1>
         <p>` + (func() string {
-		if username != "" {
-			return "Thank you, " + username + "!"
+		if plexUser.Username != "" {
+			return "Thank you, " + plexUser.Username + "!"
 		}
 		return "Thank you!"
 	}()) + ` Your subscription will be activated soon.</p>
         <p>You will have full access to our Plex server shortly.</p>
+        <p>An invite link will be sent to ` + (func() string {
+		if plexUser.Email != "" {
+			return "<strong>" + plexUser.Email + "</strong>"
+		}
+		return "your email address"
+	}()) + `. Please check your inbox (and spam folder).</p>
         <a href="/" class="home-button">Return Home</a>
     </div>
 </body>

@@ -1,9 +1,12 @@
 package server
 
 import (
+	"crypto/tls"
 	"net/http"
+	"net/url"
 	"striplex/config"
 	"striplex/controllers"
+	"striplex/services"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -20,6 +23,15 @@ func NewRouter() *gin.Engine {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
+	if config.Config.GetBool("proxy.enabled") {
+		proxyURL, _ := url.Parse(config.Config.GetString("proxy.url"))
+		httpClient.Transport = &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+	}
 
 	// Initialize router and session store
 	router := gin.Default()
@@ -28,7 +40,7 @@ func NewRouter() *gin.Engine {
 	router.Use(sessions.Sessions("session_store", store))
 
 	// Initialize controllers
-	appController := controllers.NewAppController(httpClient)
+	appController := controllers.NewAppController(httpClient, services.NewServices(httpClient))
 	appController.GetRoutes(&router.RouterGroup)
 
 	return router
