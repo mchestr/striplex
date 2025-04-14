@@ -1,6 +1,7 @@
 package stripecontroller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -9,20 +10,23 @@ import (
 	"striplex/config"
 	"striplex/model"
 	"striplex/services"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v82"
-	StripeSession "github.com/stripe/stripe-go/v82/checkout/session"
+	stripeSession "github.com/stripe/stripe-go/v82/checkout/session"
 	"github.com/stripe/stripe-go/v82/customer"
 )
 
+// StripeController handles Stripe payment and subscription related operations
 type StripeController struct {
 	basePath string
 	client   *http.Client
 	services *services.Services
 }
 
+// NewStripeController creates a new StripeController instance
 func NewStripeController(basePath string, client *http.Client, services *services.Services) *StripeController {
 	return &StripeController{
 		basePath: basePath,
@@ -30,6 +34,8 @@ func NewStripeController(basePath string, client *http.Client, services *service
 		services: services,
 	}
 }
+
+// GetRoutes registers all routes for the Stripe controller
 func (s *StripeController) GetRoutes(r *gin.RouterGroup) {
 	r.GET("/checkout", s.CreateCheckoutSession)
 	r.GET("/success", s.SuccessSubscription)
@@ -38,6 +44,10 @@ func (s *StripeController) GetRoutes(r *gin.RouterGroup) {
 
 // CreateCheckoutSession creates a Stripe checkout session for subscription and redirects the user.
 func (s *StripeController) CreateCheckoutSession(c *gin.Context) {
+	// Create a context with timeout for external API calls
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
 	// Check for Plex authentication in session
 	session := sessions.Default(c)
 	userInfo := session.Get("user_info")
@@ -53,26 +63,18 @@ func (s *StripeController) CreateCheckoutSession(c *gin.Context) {
 		}
 
 		// Redirect to Plex authentication route
-		c.Redirect(http.StatusFound, fmt.Sprintf("/plex/auth?next=%s/checkout?price_id=%s", s.basePath, c.Query("price_id")))
+		c.Redirect(http.StatusFound, fmt.Sprintf("/plex/auth?next=%s/checkout?price_id=%s",
+			s.basePath, c.Query("price_id")))
 		return
 	}
 
 	// Parse the Plex user info
-	var userInfoData model.UserInfo
-	if byteData, ok := userInfo.(string); ok {
-		if err := json.Unmarshal([]byte(byteData), &userInfoData); err != nil {
-			slog.Error("Failed to parse user info", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid session data"})
-			return
-		}
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid session format"})
+	userInfoData, err := parseUserInfo(userInfo)
+	if err != nil {
+		slog.Error("Failed to parse user info", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid session data"})
 		return
 	}
-
-	// Set success and cancel URLs
-	successURL := fmt.Sprintf("https://%s%s/success", config.Config.GetString("server.hostname"), s.basePath)
-	cancelURL := fmt.Sprintf("https://%s%s/cancel", config.Config.GetString("server.hostname"), s.basePath)
 
 	// Get the price ID from the request (could be query param or from body)
 	priceID := c.Query("price_id")
@@ -81,48 +83,11 @@ func (s *StripeController) CreateCheckoutSession(c *gin.Context) {
 		return
 	}
 
-	// Create a Stripe customer first with Plex user metadata
-	customerParams := &stripe.CustomerParams{
-		Email: stripe.String(userInfoData.Email),
-		Name:  stripe.String(userInfoData.Username),
-		Metadata: map[string]string{
-			"plex_user_id":  strconv.Itoa(userInfoData.ID),
-			"plex_username": userInfoData.Username,
-			"plex_email":    userInfoData.Email,
-		},
-	}
-
-	customer, err := customer.New(customerParams)
+	// Create or retrieve a customer and checkout session
+	sess, err := s.createCheckoutSession(ctx, userInfoData, priceID)
 	if err != nil {
-		slog.Error("Failed to create customer", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Stripe customer"})
-		return
-	}
-
-	slog.Info("Created Stripe customer", "customer_id", customer.ID, "email", customer.Email)
-
-	// Create checkout session parameters
-	params := &stripe.CheckoutSessionParams{
-		PaymentMethodTypes: stripe.StringSlice([]string{
-			"card",
-		}),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{
-			{
-				Price:    stripe.String(priceID),
-				Quantity: stripe.Int64(1),
-			},
-		},
-		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
-		SuccessURL: stripe.String(successURL),
-		CancelURL:  stripe.String(cancelURL),
-		Customer:   stripe.String(customer.ID),
-	}
-
-	// Create the checkout session
-	sess, err := StripeSession.New(params)
-	if err != nil {
-		slog.Error("Failed to create checkout session", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create checkout session"})
+		slog.Error("Failed to create checkout session", "error", err, "user", userInfoData.Email)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process checkout"})
 		return
 	}
 
@@ -136,17 +101,110 @@ func (s *StripeController) SuccessSubscription(c *gin.Context) {
 	session := sessions.Default(c)
 	userInfo := session.Get("user_info")
 
+	// Parse user info if available
 	var plexUser model.UserInfo
 	if userInfo != nil {
-		if byteData, ok := userInfo.(string); ok {
-			if err := json.Unmarshal([]byte(byteData), &plexUser); err != nil {
-				slog.Error("failed to unmarshal user info", "error", err)
-			}
+		parsedUser, err := parseUserInfo(userInfo)
+		if err != nil {
+			slog.Warn("failed to parse user info in success page", "error", err)
+		} else {
+			plexUser = parsedUser
 		}
 	}
 
+	// Generate dynamic content based on available user info
+	username := "Thank you!"
+	if plexUser.Username != "" {
+		username = "Thank you, " + plexUser.Username + "!"
+	}
+
+	emailDisplay := "your email address"
+	if plexUser.Email != "" {
+		emailDisplay = "<strong>" + plexUser.Email + "</strong>"
+	}
+
 	// Display a success page
-	html := `
+	c.Header("Content-Type", "text/html")
+	c.String(http.StatusOK, generateSuccessHTML(username, emailDisplay))
+}
+
+// CancelSubscription handles cancelled Stripe checkout
+func (s *StripeController) CancelSubscription(c *gin.Context) {
+	priceID := c.Query("price_id")
+
+	// Display a cancellation page
+	c.Header("Content-Type", "text/html")
+	c.String(http.StatusOK, generateCancelHTML(priceID))
+}
+
+// Helper functions
+
+// createCheckoutSession creates a Stripe customer and checkout session
+func (s *StripeController) createCheckoutSession(ctx context.Context, userData model.UserInfo, priceID string) (*stripe.CheckoutSession, error) {
+	// Set success and cancel URLs
+	hostname := config.Config.GetString("server.hostname")
+	successURL := fmt.Sprintf("https://%s%s/success", hostname, s.basePath)
+	cancelURL := fmt.Sprintf("https://%s%s/cancel?price_id=%s", hostname, s.basePath, priceID)
+
+	// Create a Stripe customer first with Plex user metadata
+	customerParams := &stripe.CustomerParams{
+		Email: stripe.String(userData.Email),
+		Name:  stripe.String(userData.Username),
+		Metadata: map[string]string{
+			"plex_user_id":  strconv.Itoa(userData.ID),
+			"plex_username": userData.Username,
+			"plex_email":    userData.Email,
+		},
+	}
+	customerParams.Context = ctx
+
+	customer, err := customer.New(customerParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Stripe customer: %w", err)
+	}
+
+	slog.Info("Created Stripe customer",
+		"customer_id", customer.ID,
+		"email", customer.Email,
+		"plex_id", userData.ID)
+
+	// Create checkout session parameters
+	params := &stripe.CheckoutSessionParams{
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				Price:    stripe.String(priceID),
+				Quantity: stripe.Int64(1),
+			},
+		},
+		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		SuccessURL: stripe.String(successURL),
+		CancelURL:  stripe.String(cancelURL),
+		Customer:   stripe.String(customer.ID),
+	}
+	params.Context = ctx
+
+	// Create the checkout session
+	return stripeSession.New(params)
+}
+
+// parseUserInfo parses user info from the session
+func parseUserInfo(userInfo interface{}) (model.UserInfo, error) {
+	var userInfoData model.UserInfo
+
+	if byteData, ok := userInfo.(string); ok {
+		if err := json.Unmarshal([]byte(byteData), &userInfoData); err != nil {
+			return model.UserInfo{}, fmt.Errorf("invalid user info JSON: %w", err)
+		}
+		return userInfoData, nil
+	}
+
+	return model.UserInfo{}, fmt.Errorf("user info is not in expected string format")
+}
+
+// generateSuccessHTML generates the HTML for the success page
+func generateSuccessHTML(username, emailDisplay string) string {
+	return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -210,32 +268,19 @@ func (s *StripeController) SuccessSubscription(c *gin.Context) {
     <div class="container">
         <div class="success-icon">✓</div>
         <h1>Subscription Successful!</h1>
-        <p>` + (func() string {
-		if plexUser.Username != "" {
-			return "Thank you, " + plexUser.Username + "!"
-		}
-		return "Thank you!"
-	}()) + ` Your subscription will be activated soon.</p>
+        <p>` + username + ` Your subscription will be activated soon.</p>
         <p>You will have full access to our Plex server shortly.</p>
-        <p>An invite link will be sent to ` + (func() string {
-		if plexUser.Email != "" {
-			return "<strong>" + plexUser.Email + "</strong>"
-		}
-		return "your email address"
-	}()) + `. Please check your inbox (and spam folder).</p>
+        <p>An invite link will be sent to ` + emailDisplay + `. Please check your inbox (and spam folder).</p>
         <a href="/" class="home-button">Return Home</a>
     </div>
 </body>
 </html>
 `
-	c.Header("Content-Type", "text/html")
-	c.String(http.StatusOK, html)
 }
 
-// CancelSubscription handles cancelled Stripe checkout
-func (s *StripeController) CancelSubscription(c *gin.Context) {
-	// Display a cancellation page
-	html := `
+// generateCancelHTML generates the HTML for the cancellation page
+func generateCancelHTML(priceID string) string {
+	return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -315,12 +360,10 @@ func (s *StripeController) CancelSubscription(c *gin.Context) {
         <p>If you encountered an issue or have changed your mind, you can try again or contact support.</p>
         <div class="buttons">
             <a href="/" class="button home-button">Return Home</a>
-            <a href="/api/v1/stripe/checkout?price_id=` + c.Query("price_id") + `" class="button retry-button">Try Again</a>
+            <a href="/api/v1/stripe/checkout?price_id=` + priceID + `" class="button retry-button">Try Again</a>
         </div>
     </div>
 </body>
 </html>
 `
-	c.Header("Content-Type", "text/html")
-	c.String(http.StatusOK, html)
 }
