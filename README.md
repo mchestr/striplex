@@ -50,7 +50,6 @@ plefi
 ### Prerequisites
 
 - Go 1.24 or higher
-- PostgreSQL database
 - Stripe account with webhook setup
 - Plex account and server (optional for development)
 
