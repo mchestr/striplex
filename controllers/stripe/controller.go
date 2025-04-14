@@ -16,6 +16,7 @@ import (
 	"github.com/stripe/stripe-go/v82"
 	stripeSession "github.com/stripe/stripe-go/v82/checkout/session"
 	"github.com/stripe/stripe-go/v82/customer"
+	"github.com/stripe/stripe-go/v82/subscription"
 )
 
 // StripeController handles Stripe payment and subscription related operations
@@ -39,6 +40,7 @@ func (s *StripeController) GetRoutes(r *gin.RouterGroup) {
 	r.GET("/checkout", s.CreateCheckoutSession)
 	r.GET("/success", s.SuccessSubscription)
 	r.GET("/cancel", s.CancelSubscription)
+	r.POST("/cancel-subscription", s.CancelUserSubscription)
 }
 
 // CreateCheckoutSession creates a Stripe checkout session for subscription and redirects the user.
@@ -128,6 +130,102 @@ func (s *StripeController) CancelSubscription(ctx *gin.Context) {
 	// Render the cancel template with data
 	ctx.HTML(http.StatusOK, "stripe_cancel.tmpl", gin.H{
 		"PriceID": priceID,
+	})
+}
+
+// CancelUserSubscription cancels a user's active subscription
+func (s *StripeController) CancelUserSubscription(ctx *gin.Context) {
+	// Check for authentication
+	session := sessions.Default(ctx)
+	userInfo := session.Get("user_info")
+	if userInfo == nil {
+		// Redirect to Plex authentication route
+		ctx.Redirect(http.StatusFound, fmt.Sprintf("/plex/auth?next=%s/cancel",
+			s.basePath))
+		return
+	}
+
+	// Parse user info
+	plexUser, err := parseUserInfo(userInfo)
+	if err != nil {
+		slog.Error("Failed to parse user info", "error", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status": "error",
+			"error":  "Invalid session data",
+		})
+		return
+	}
+
+	// Find Stripe customer by Plex user ID
+	customerList := &stripe.CustomerListParams{}
+	customerList.Filters.AddFilter("metadata[plex_user_id]", "", strconv.Itoa(plexUser.ID))
+
+	it := customer.List(customerList)
+
+	// Track if we found and processed any customers
+	customersFound := false
+	subscriptionsCanceled := 0
+
+	// Process each customer found
+	for it.Next() {
+		customersFound = true
+		cus := it.Customer()
+
+		// Find active subscriptions for this customer
+		subList := &stripe.SubscriptionListParams{}
+		subList.Filters.AddFilter("customer", "", cus.ID)
+		subList.Filters.AddFilter("status", "", "active")
+
+		subIt := subscription.List(subList)
+
+		// Process each subscription for this customer
+		for subIt.Next() {
+			sub := subIt.Subscription()
+
+			// Cancel subscription
+			cancelParams := &stripe.SubscriptionParams{
+				CancelAtPeriodEnd: stripe.Bool(true),
+			}
+
+			_, err = subscription.Update(sub.ID, cancelParams)
+			if err != nil {
+				slog.Error("Failed to cancel subscription",
+					"error", err,
+					"subscription_id", sub.ID,
+					"customer_id", cus.ID)
+				continue
+			}
+
+			subscriptionsCanceled++
+			slog.Info("Canceled subscription",
+				"subscription_id", sub.ID,
+				"customer_id", cus.ID,
+				"plex_user_id", plexUser.ID)
+		}
+	}
+
+	// Check if we processed any customers
+	if !customersFound {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"status": "error",
+			"error":  "No customers found for this user",
+		})
+		return
+	}
+
+	// Check if we canceled any subscriptions
+	if subscriptionsCanceled == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"status": "error",
+			"error":  "No active subscriptions found for this user",
+		})
+		return
+	}
+
+	// Return success
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": fmt.Sprintf("Successfully canceled %d subscription(s)", subscriptionsCanceled),
 	})
 }
 
