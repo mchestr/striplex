@@ -1,6 +1,6 @@
 package server
 
-import "striplex/config"
+import "plefi/config"
 
 func Init() error {
 	r := NewRouter()

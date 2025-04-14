@@ -1,4 +1,4 @@
-module striplex
+module plefi
 
 go 1.24
 

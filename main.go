@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"os"
 
-	"striplex/config"
-	"striplex/db"
-	"striplex/server"
+	"plefi/config"
+	"plefi/db"
+	"plefi/server"
 
 	"github.com/stripe/stripe-go/v82"
 )

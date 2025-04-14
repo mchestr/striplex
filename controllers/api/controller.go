@@ -2,8 +2,8 @@ package apicontroller
 
 import (
 	"net/http"
-	v1Controller "striplex/controllers/api/v1"
-	"striplex/services"
+	v1Controller "plefi/controllers/api/v1"
+	"plefi/services"
 
 	"github.com/gin-gonic/gin"
 )

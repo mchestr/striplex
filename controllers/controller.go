@@ -3,17 +3,17 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"striplex/config"
-	"striplex/db"
-	"striplex/model"
-	"striplex/services"
+	"plefi/config"
+	"plefi/db"
+	"plefi/model"
+	"plefi/services"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	apicontroller "striplex/controllers/api"
-	plexcontroller "striplex/controllers/plex"
-	stripecontroller "striplex/controllers/stripe"
+	apicontroller "plefi/controllers/api"
+	plexcontroller "plefi/controllers/plex"
+	stripecontroller "plefi/controllers/stripe"
 )
 
 type AppController struct {

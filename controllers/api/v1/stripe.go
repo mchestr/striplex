@@ -7,7 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"striplex/config"
+	"plefi/config"
 	"time"
 
 	"github.com/gin-gonic/gin"

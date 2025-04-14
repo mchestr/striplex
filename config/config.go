@@ -43,7 +43,7 @@ func Init(env string) error {
 		return err
 	}
 	Config.SetConfigType("env")
-	Config.SetEnvPrefix("striplex")
+	Config.SetEnvPrefix("plefi")
 	Config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
 	Config.AutomaticEnv()
 	setDefaults()

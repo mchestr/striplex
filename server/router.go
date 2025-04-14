@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/url"
-	"striplex/config"
-	"striplex/controllers"
-	"striplex/services"
+	"plefi/config"
+	"plefi/controllers"
+	"plefi/services"
 	"time"
 
 	"github.com/gin-contrib/sessions"

@@ -1,5 +1,5 @@
 [plex]
-client_id = "striplex"
+client_id = "plefi"
 
 [wizarr]
 invite_expiration = "43800m"

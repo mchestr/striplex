@@ -1,7 +1,7 @@
 package db
 
 import (
-	"striplex/config"
+	"plefi/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

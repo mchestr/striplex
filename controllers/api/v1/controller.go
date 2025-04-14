@@ -2,7 +2,7 @@ package v1controller
 
 import (
 	"net/http"
-	"striplex/services"
+	"plefi/services"
 
 	"github.com/gin-gonic/gin"
 )

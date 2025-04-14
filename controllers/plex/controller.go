@@ -11,9 +11,9 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"striplex/config"
-	"striplex/model"
-	"striplex/services"
+	"plefi/config"
+	"plefi/model"
+	"plefi/services"
 	"time"
 
 	"github.com/gin-contrib/sessions"

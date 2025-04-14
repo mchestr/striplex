@@ -8,8 +8,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"plefi/config"
 	"strings"
-	"striplex/config"
 )
 
 // PlexService handles interactions with the Plex Media Server API

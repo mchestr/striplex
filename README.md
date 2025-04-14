@@ -14,7 +14,7 @@ Striplex is a service that integrates Stripe payment processing with Plex media 
 ## Project Structure
 
 ```
-striplex
+plefi
 ├── config/                # Configuration files and setup
 │   ├── config.go          # Configuration initialization
 │   ├── default.yaml       # Default configuration values
@@ -63,8 +63,8 @@ striplex
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/striplex.git
-cd striplex
+git clone https://github.com/yourusername/plefi.git
+cd plefi
 ```
 
 2. Install dependencies:
@@ -76,12 +76,12 @@ go mod download
 3. Create a `.env` file in the project root with your configuration:
 
 ```
-STRIPLEX_DATABASE__DSN="host=localhost user=username password=password dbname=striplex port=5432 sslmode=disable TimeZone=UTC"
-STRIPLEX_STRIPE__WEBHOOK_SECRET="your_stripe_webhook_secret"
-STRIPLEX_PLEX__CLIENT_ID="your_plex_client_id"
-STRIPLEX_SERVER__HOSTNAME="your-server-hostname.com"
-STRIPLEX_PLEX__PRODUCT="Your Plex Server Name"
-STRIPLEX_SERVER__SESSION_SECRET="generate_a_random_secret_key"
+PLEFI_DATABASE__DSN="host=localhost user=username password=password dbname=plefi port=5432 sslmode=disable TimeZone=UTC"
+PLEFI_STRIPE__WEBHOOK_SECRET="your_stripe_webhook_secret"
+PLEFI_PLEX__CLIENT_ID="your_plex_client_id"
+PLEFI_SERVER__HOSTNAME="your-server-hostname.com"
+PLEFI_PLEX__PRODUCT="Your Plex Server Name"
+PLEFI_SERVER__SESSION_SECRET="generate_a_random_secret_key"
 ```
 
 ### Running the Application
@@ -103,8 +103,8 @@ go run main.go -e development
 Build and run the Docker container:
 
 ```bash
-docker build -t striplex .
-docker run -p 8080:8080 --env-file .env striplex
+docker build -t plefi .
+docker run -p 8080:8080 --env-file .env plefi
 ```
 
 ## API Endpoints
@@ -138,7 +138,7 @@ Striplex uses a hierarchical configuration system:
 
 1. Default values
 2. Configuration files in `config/` directory
-3. Environment variables (prefixed with `STRIPLEX_`)
+3. Environment variables (prefixed with `PLEFI_`)
 
 ### Key Configuration Options
 
