@@ -5,10 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"strconv"
-	"strings"
 	"striplex/config"
-	"striplex/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v82"
@@ -98,36 +95,23 @@ func (s *V1) Webhook(c *gin.Context) {
 		for _, entitlement := range summary.Entitlements.Data {
 			switch entitlement.LookupKey {
 			case config.Config.GetString("stripe.entitlement_name"):
-				// Entitlement is being added - generate Wizarr invite code
-				wizarrService := services.NewWizarrService(http.DefaultClient)
-				invite, err := wizarrService.GenerateInviteLink()
-				if err != nil {
-					slog.Error("Failed to generate Wizarr invite", "error", err, "customer", summary.Customer)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate invite"})
+				// Get Plex user ID from customer metadata or email
+				plexUserEmail, ok := stripeCustomer.Metadata["plex_email"]
+				if !ok {
+					slog.Error("No Plex user ID found for customer", "customer", summary.Customer)
+					c.JSON(http.StatusBadRequest, gin.H{"error": "No Plex user ID found"})
 					return
 				}
 
-				slog.Info("Generated Wizarr invite code", "code", invite.ID, "customer", summary.Customer)
-
-				// Update customer metadata with the Wizarr invite code
-				params := &stripe.CustomerParams{
-					Metadata: map[string]string{},
-				}
-				if existingInvites, ok := stripeCustomer.Metadata["wizarr_invites"]; ok {
-					params.Metadata["wizarr_invites"] = existingInvites + "," + strconv.Itoa(invite.ID)
-				} else {
-					params.Metadata["wizarr_invites"] = strconv.Itoa(invite.ID)
-				}
-
-				_, err = customer.Update(summary.Customer, params)
-				if err != nil {
-					slog.Error("Failed to update customer metadata", "error", err, "customer", summary.Customer)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer metadata"})
+				// Share Plex library with the user
+				if err := s.services.Plex.ShareLibrary(plexUserEmail); err != nil {
+					slog.Error("Failed to share Plex library", "error", err, "user", plexUserEmail, "customer", summary.Customer)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to share Plex library"})
 					return
 				}
 
-				slog.Info("Updated customer with invite code", "customer", summary.Customer, "code", invite.Code, "entitlement", entitlement.LookupKey)
-				c.JSON(http.StatusOK, gin.H{"status": "entitlement_added", "type": event.Type, "entitlement": entitlement.LookupKey})
+				slog.Info("Shared Plex library with user", "customer", summary.Customer, "plex_user", plexUserEmail, "entitlement", entitlement.LookupKey)
+				c.JSON(http.StatusOK, gin.H{"status": "library_shared", "type": event.Type, "entitlement": entitlement.LookupKey})
 				return
 			default:
 				slog.Info("Ignoring entitlement with unsupported lookup key", "lookup_key", entitlement.LookupKey)
@@ -142,65 +126,31 @@ func (s *V1) Webhook(c *gin.Context) {
 
 	// Check if an entitlement is being removed
 	if len(prevAttrs.Entitlements.Data) > 0 {
-		// Entitlement is being removed - log this event
+		// Entitlement is being removed - unshare Plex library
 		slog.Info("Entitlement removed", "customer", summary.Customer)
 
-		// Get wizarr_invites from metadata
-		if invitesList, ok := stripeCustomer.Metadata["wizarr_invites"]; ok && invitesList != "" {
-			inviteIDs := strings.Split(invitesList, ",")
-			slog.Info("Found invite IDs to delete", "count", len(inviteIDs), "customer", summary.Customer)
-
-			// Delete each invite
-			for _, inviteIDStr := range inviteIDs {
-				inviteID, err := strconv.Atoi(strings.TrimSpace(inviteIDStr))
-				if err != nil {
-					slog.Error("Invalid invite ID format", "id", inviteIDStr, "customer", summary.Customer)
-					continue
-				}
-
-				// Get Plex username associated with the invitation
-				plexUserId, err := s.services.Wizarr.GetPlexIDFromInvitation(inviteID)
-				if err != nil {
-					slog.Error("Failed to get Plex username from invitation",
-						"error", err, "id", inviteID, "customer", summary.Customer)
-					continue
-				}
-				slog.Info("Found Plex username for invitation", "id", inviteID, "username", plexUserId, "customer", summary.Customer)
-
-				if err := s.services.Plex.UnshareLibrary(plexUserId); err != nil {
-					slog.Error("Failed to unshare library with Plex user",
-						"error", err, "username", plexUserId, "customer", summary.Customer)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unshare library"})
-					continue
-				}
-				slog.Info("Successfully unshared library with Plex user", "id", inviteID, "username", plexUserId, "customer", summary.Customer)
-
-				if err := s.services.Wizarr.DeleteInvite(inviteID); err != nil {
-					slog.Error("Failed to delete Wizarr invite",
-						"error", err, "id", inviteID, "customer", summary.Customer)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invite"})
-					continue
-				}
-				slog.Info("Successfully deleted Wizarr invite", "id", inviteID, "username", plexUserId, "customer", summary.Customer)
-
-			}
-
-			// Clear the wizarr_invites metadata
-			params := &stripe.CustomerParams{
-				Metadata: map[string]string{
-					"wizarr_invites": "",
-				},
-			}
-
-			if _, err := customer.Update(summary.Customer, params); err != nil {
-				slog.Error("Failed to update customer metadata after deletion",
-					"error", err, "customer", summary.Customer)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer metadata"})
-				return
-			}
-		} else {
-			slog.Info("No Wizarr invites found for customer", "customer", summary.Customer)
+		// Get Plex user ID from customer metadata
+		plexUserID, ok := stripeCustomer.Metadata["plex_user_id"]
+		if !ok {
+			slog.Error("No Plex user ID found for customer", "customer", summary.Customer)
+			c.JSON(http.StatusOK, gin.H{"status": "No Plex user ID found"})
+			return
 		}
-		c.JSON(http.StatusOK, gin.H{"status": "entitlement_removed", "type": event.Type})
+
+		// Unshare library with the Plex user
+		if err := s.services.Plex.UnshareLibrary(plexUserID); err != nil {
+			slog.Error("Failed to unshare library with Plex user",
+				"error", err, "user", plexUserID, "customer", summary.Customer)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unshare Plex library"})
+			return
+		}
+
+		slog.Info("Successfully unshared library with Plex user", "user", plexUserID, "customer", summary.Customer)
+		c.JSON(http.StatusOK, gin.H{"status": "library_unshared", "type": event.Type})
+		return
 	}
+
+	// If we reach here, it's an entitlement update that doesn't change the count
+	slog.Info("Entitlement updated without count change", "customer", summary.Customer)
+	c.JSON(http.StatusOK, gin.H{"status": "entitlement_updated", "type": event.Type})
 }

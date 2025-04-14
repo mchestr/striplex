@@ -21,6 +21,8 @@ func main() {
 	flag.Parse()
 	config.Init(*environment)
 
+	fmt.Println(config.Config.GetStringSlice("plex.shared_libraries"))
+
 	stripe.Key = config.Config.GetString("stripe.secret_key")
 	db.Connect()
 	server.Init()

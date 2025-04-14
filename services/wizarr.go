@@ -1,11 +1,12 @@
 package services
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"striplex/config"
 )
 
@@ -18,9 +19,9 @@ type WizarrService struct {
 
 // WizarrInviteRequest represents the request body for creating an invite
 type WizarrInviteRequest struct {
-	Duration          int      `json:"duration,omitempty"`           // Time in seconds until the invite expires
+	Duration          int      `json:"duration,omitempty"`           // Time in minutes until the invite expires
 	MaxUses           int      `json:"max_uses,omitempty"`           // Maximum number of uses for the invite
-	Expires           int      `json:"expires"`                      // Time in seconds until the invite expires
+	Expires           int      `json:"expires"`                      // Time in minutes until the invite expires
 	Unlimited         bool     `json:"unlimited"`                    // Whether the invite has unlimited uses
 	PlexAllowSync     bool     `json:"plex_allow_sync"`              // Whether Plex sync is allowed
 	LiveTV            bool     `json:"live_tv"`                      // Whether Live TV is allowed
@@ -32,21 +33,20 @@ type WizarrInviteRequest struct {
 
 // WizarrInviteResponse represents the response from the Wizarr API when creating an invite
 type WizarrInviteResponse struct {
-	AllowDownload     bool      `json:"allow_download"`
-	Code              string    `json:"code"`
-	Created           string    `json:"created"`
-	Duration          string    `json:"duration"` // Changed from *int to string
-	Expires           string    `json:"expires"`  // Changed from *int to string
-	HideUser          bool      `json:"hide_user"`
-	ID                int       `json:"id"`
-	LiveTV            *bool     `json:"live_tv"` // Changed to pointer to handle null
-	PlexAllowSync     bool      `json:"plex_allow_sync"`
-	Sessions          *int      `json:"sessions"`
-	SpecificLibraries *[]string `json:"specific_libraries"` // Changed to pointer to handle null
-	Unlimited         bool      `json:"unlimited"`
-	Used              bool      `json:"used"`
-	UsedAt            *string   `json:"used_at"`
-	UsedBy            []string  `json:"used_by"` // Changed to []string from *string
+	AllowDownload bool     `json:"allow_download"`
+	Code          string   `json:"code"`
+	Created       string   `json:"created"`
+	Duration      string   `json:"duration"` // Changed from *int to string
+	Expires       string   `json:"expires"`  // Changed from *int to string
+	HideUser      bool     `json:"hide_user"`
+	ID            int      `json:"id"`
+	LiveTV        *bool    `json:"live_tv"` // Changed to pointer to handle null
+	PlexAllowSync bool     `json:"plex_allow_sync"`
+	Sessions      *int     `json:"sessions"`
+	Unlimited     bool     `json:"unlimited"`
+	Used          bool     `json:"used"`
+	UsedAt        *string  `json:"used_at"`
+	UsedBy        []string `json:"used_by"` // Changed to []string from *string
 }
 
 // WizarrUser represents a user in the Wizarr system
@@ -152,7 +152,7 @@ func (w *WizarrService) GetUserByEmail(email string) (*WizarrUser, error) {
 	return nil, fmt.Errorf("user with email %s not found", email)
 }
 
-// GetUserByEmail finds a user by their email address
+// GetUserId finds a user by their ID
 func (w *WizarrService) GetUserId(id int) (*WizarrUser, error) {
 	// Get all users first
 	users, err := w.ListUsers()
@@ -160,7 +160,7 @@ func (w *WizarrService) GetUserId(id int) (*WizarrUser, error) {
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 
-	// Find the user with the matching email
+	// Find the user with the matching ID
 	for _, user := range users {
 		if user.ID == id {
 			return &user, nil
@@ -196,26 +196,22 @@ func (w *WizarrService) DeleteInvite(id int) error {
 
 // GenerateInviteLink creates a new invite in Wizarr and returns the generated link
 func (w *WizarrService) GenerateInviteLink() (*WizarrInviteResponse, error) {
-	// Create invite request using the struct
-	inviteReq := WizarrInviteRequest{
-		Expires: int(config.Config.GetDuration("wizarr.invite_expiration").Minutes()),
-	}
+	// Create form data
+	formData := url.Values{}
+	formData.Set("expires", strconv.Itoa(int(config.Config.GetDuration("wizarr.invite_expiration").Minutes())))
 
-	// Marshal the struct to JSON
-	jsonData, err := json.Marshal(inviteReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal JSON payload: %w", err)
-	}
-
-	// Create the HTTP request
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/invitations", w.baseURL),
-		bytes.NewBuffer(jsonData))
+	// Create the HTTP request with form data
+	req, err := http.NewRequest(
+		http.MethodPost,
+		fmt.Sprintf("%s/api/invitations", w.baseURL),
+		strings.NewReader(formData.Encode()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Add headers
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", w.apiKey))
 
 	// Send the request
@@ -224,6 +220,11 @@ func (w *WizarrService) GenerateInviteLink() (*WizarrInviteResponse, error) {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
+
+	// Check for non-2xx response
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("API returned error status: %d %s", resp.StatusCode, resp.Status)
+	}
 
 	// Parse response
 	var inviteResp WizarrInviteResponse
@@ -266,12 +267,20 @@ func (w *WizarrService) GetInviteByID(id int) (*WizarrInviteResponse, error) {
 	return &invite, nil
 }
 
-// GetUsernameFromInvitation retrieves the username associated with an invitation
+// GetPlexIDFromInvitation retrieves the Plex ID associated with an invitation
 func (w *WizarrService) GetPlexIDFromInvitation(inviteId int) (string, error) {
+	if err := w.ScanUsers(); err != nil {
+		return "", fmt.Errorf("failed to scan users: %w", err)
+	}
+
 	invite, err := w.GetInviteByID(inviteId)
 	if err != nil {
 		return "", fmt.Errorf("failed to get invite by ID: %w", err)
 	}
+	if !invite.Used {
+		return "", nil
+	}
+
 	// Check if the invite has been used
 	if !invite.Used || len(invite.UsedBy) == 0 {
 		return "", fmt.Errorf("invitation has not been used yet")
@@ -291,6 +300,33 @@ func (w *WizarrService) GetPlexIDFromInvitation(inviteId int) (string, error) {
 	// Find the user by email
 	user, err := w.GetUserByEmail(userIdentifier)
 	if err != nil {
+		return "", fmt.Errorf("failed to find user by ID or email: %w", err)
 	}
 	return user.Token, nil
+}
+
+// ScanUsers triggers the Wizarr users scan operation
+func (w *WizarrService) ScanUsers() error {
+	// Create the HTTP request
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/users/scan", w.baseURL), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create scan users request: %w", err)
+	}
+
+	// Add authorization header
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", w.apiKey))
+
+	// Send the request
+	resp, err := w.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("scan users request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check for non-2xx response
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("scan users API returned error status: %d %s", resp.StatusCode, resp.Status)
+	}
+
+	return nil
 }
