@@ -13,5 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /main .
 FROM gcr.io/distroless/static-debian11
 
 COPY --from=base /main .
+# Add the views directory to the container
+COPY --from=base /go/src/smallest-golang/app/views /views
 
 CMD ["./main"]
