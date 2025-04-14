@@ -16,6 +16,12 @@ import (
 
 // NewRouter sets up and configures the application router with all routes.
 func NewRouter() *gin.Engine {
+	// Initialize router
+	router := gin.Default()
+
+	// Set up HTML rendering
+	router.LoadHTMLGlob("views/*")
+
 	// Set Gin mode based on configuration
 	gin.SetMode(config.Config.GetString("server.mode"))
 
@@ -33,8 +39,7 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
-	// Initialize router and session store
-	router := gin.Default()
+	// Initialize session store
 	sessionSecret := []byte(config.Config.GetString("server.session_secret"))
 	store := cookie.NewStore(sessionSecret)
 	router.Use(sessions.Sessions("session_store", store))

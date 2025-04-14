@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Cancelled</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            background-color: #313244;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #f38ba8;
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #bac2de;
+        }
+        .cancel-icon {
+            font-size: 4rem;
+            color: #f38ba8;
+            margin-bottom: 1rem;
+        }
+        .buttons {
+            margin-top: 1.5rem;
+        }
+        .button {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            margin: 0 0.5rem;
+            color: #1e1e2e;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .home-button {
+            background-color: #74c7ec;
+        }
+        .retry-button {
+            background-color: #f9e2af;
+        }
+        .home-button:hover {
+            background-color: #89dceb;
+        }
+        .retry-button:hover {
+            background-color: #f5e0bc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="cancel-icon">✕</div>
+        <h1>Subscription Cancelled</h1>
+        <p>Your subscription process was cancelled.</p>
+        <p>If you encountered an issue or have changed your mind, you can try again or contact support.</p>
+        <div class="buttons">
+            <a href="/" class="button home-button">Return Home</a>
+            <a href="/api/v1/stripe/checkout?price_id={{ .PriceID }}" class="button retry-button">Try Again</a>
+        </div>
+    </div>
+</body>
+</html>

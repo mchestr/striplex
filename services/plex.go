@@ -110,12 +110,12 @@ func (p *PlexService) UnshareLibrary(ctx context.Context, userID string) error {
 }
 
 // ShareLibrary shares specific libraries with a Plex user
-func (p *PlexService) ShareLibrary(email string) error {
+func (p *PlexService) ShareLibrary(ctx context.Context, email string) error {
 	if email == "" {
 		return fmt.Errorf("email cannot be empty")
 	}
 
-	sectionIDs, err := p.GetSectionIDsByNames(strings.Split(config.Config.GetString("plex.shared_libraries"), ","))
+	sectionIDs, err := p.GetSectionIDsByNames(ctx, strings.Split(config.Config.GetString("plex.shared_libraries"), ","))
 	if err != nil {
 		return fmt.Errorf("failed to get section IDs: %w", err)
 	}
@@ -142,7 +142,7 @@ func (p *PlexService) ShareLibrary(email string) error {
 		return fmt.Errorf("failed to marshal JSON payload: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://clients.plex.tv/api/v2/shared_servers",
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://clients.plex.tv/api/v2/shared_servers",
 		bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return fmt.Errorf("failed to create share request: %w", err)
@@ -186,8 +186,8 @@ func (p *PlexService) ShareLibrary(email string) error {
 }
 
 // GetSectionIDsByNames retrieves section IDs that match the provided section names
-func (p *PlexService) GetSectionIDsByNames(sectionNames []string) ([]int, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://plex.tv/api/v2/servers/%s", p.serverID), nil)
+func (p *PlexService) GetSectionIDsByNames(ctx context.Context, sectionNames []string) ([]int, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://plex.tv/api/v2/servers/%s", p.serverID), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

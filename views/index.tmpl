@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PleFi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            background-color: #313244;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #f38ba8, #fab387, #f9e2af, #a6e3a1, #74c7ec, #cba6f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 10s ease infinite;
+            background-size: 400% 400%;
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #bac2de;
+        }
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .logo {
+            max-width: 200px;
+        }
+        .subtitle {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #45475a;
+            border-radius: 10px;
+            color: #cdd6f4;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+        .checkout-btn {
+            background: linear-gradient(90deg, #f38ba8, #fab387);
+            color: #1e1e2e;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 10px rgba(243, 139, 168, 0.4);
+            margin-right: 1rem;
+        }
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(243, 139, 168, 0.6);
+        }
+        .logout-btn {
+            background: linear-gradient(90deg, #74c7ec, #89dceb);
+            color: #1e1e2e;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 10px rgba(116, 199, 236, 0.4);
+        }
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(116, 199, 236, 0.6);
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {{ if .IsAuthenticated }}
+            <div class="greeting">
+                <h1>Hello, {{ .UserInfo.Username }}!</h1>
+            </div>
+        {{ else }}
+            <h1>PleFi</h1>
+            <div class="subtitle">Plex seamless subscription management</div>
+        {{ end }}
+        <div class="button-container">
+            {{ if .IsAuthenticated }}
+                <button class="checkout-btn" onclick="window.location.href='/stripe/checkout?price_id={{ .PriceID }}'">Subscribe Now</button>
+                <button class="logout-btn" onclick="window.location.href='/logout'">Not me? Logout</button>
+            {{ else }}
+                <button class="checkout-btn" onclick="window.location.href='/stripe/checkout?price_id={{ .PriceID }}'">Sign in to Subscribe</button>
+            {{ end }}
+        </div>
+    </div>
+</body>
+</html>

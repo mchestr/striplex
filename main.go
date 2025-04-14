@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"plefi/config"
-	"plefi/db"
 	"plefi/server"
 
 	"github.com/stripe/stripe-go/v82"
@@ -24,35 +27,66 @@ func main() {
 	}
 	flag.Parse()
 
-	// Initialize application components
-	if err := initApp(*environment); err != nil {
-		slog.Error("Failed to initialize application", "error", err)
+	// Initialize and run application components
+	if err := runApp(*environment); err != nil {
+		slog.Error("Failed to run application", "error", err)
 		os.Exit(1)
 	}
 }
 
 // initApp initializes all application components
-func initApp(environment string) error {
+func initApp(environment string) (*server.Server, error) {
 	// Initialize configuration
 	if err := config.Init(environment); err != nil {
-		return fmt.Errorf("config initialization error: %w", err)
+		return nil, fmt.Errorf("config initialization error: %w", err)
 	}
 
 	// Set Stripe API key
 	stripe.Key = config.Config.GetString("stripe.secret_key")
 	if stripe.Key == "" {
-		return fmt.Errorf("stripe API key not configured")
-	}
-
-	// Initialize database connection
-	if err := db.Connect(); err != nil {
-		return fmt.Errorf("database connection error: %w", err)
+		return nil, fmt.Errorf("stripe API key not configured")
 	}
 
 	// Initialize server components
-	if err := server.Init(); err != nil {
-		return fmt.Errorf("server initialization error: %w", err)
+	srv, err := server.Init()
+	if err != nil {
+		return nil, fmt.Errorf("server initialization error: %w", err)
 	}
 
+	return srv, nil
+}
+
+// runApp initializes the application and starts the server with graceful shutdown
+func runApp(environment string) error {
+	// Initialize application
+	srv, err := initApp(environment)
+	if err != nil {
+		return err
+	}
+
+	// Start server in a goroutine
+	go func() {
+		if err := srv.Start(); err != nil {
+			slog.Error("Server error", "error", err)
+		}
+	}()
+	slog.Info("Server started")
+
+	// Wait for interrupt signal to gracefully shut down the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	slog.Info("Shutting down server...")
+
+	// Create context with timeout for shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Attempt graceful shutdown
+	if err := srv.Shutdown(ctx); err != nil {
+		return fmt.Errorf("server forced to shutdown: %w", err)
+	}
+
+	slog.Info("Server exiting")
 	return nil
 }

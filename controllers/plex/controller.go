@@ -68,14 +68,11 @@ type PlexUserResponse struct {
 }
 
 // Authenticate redirects the user to Plex for authentication.
-func (p *PlexController) Authenticate(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-
+func (p *PlexController) Authenticate(ctx *gin.Context) {
 	code, err := p.generatePlexPin(ctx)
 	if err != nil {
 		slog.Error("Failed to generate Plex PIN", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to generate Plex PIN"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to generate Plex PIN"})
 		return
 	}
 
@@ -89,44 +86,41 @@ func (p *PlexController) Authenticate(c *gin.Context) {
 	jsonData, err := json.Marshal(cookieData)
 	if err != nil {
 		slog.Error("Failed to marshal state data", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal state data"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal state data"})
 		return
 	}
 
 	// Store the state in session/cookie to verify it on callback
-	session := sessions.Default(c)
+	session := sessions.Default(ctx)
 	session.Set("plex_auth_state", string(jsonData))
 
 	if err := session.Save(); err != nil {
 		slog.Error("Failed to save session", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
 		return
 	}
 
 	// Get next URL for redirect after authentication
-	nextURL := c.Query("next")
+	nextURL := ctx.Query("next")
 
 	// Build the Plex authentication URL
 	authURL := buildPlexAuthURL(p.basePath, state, nextURL, code.Code)
 
 	// Redirect user to Plex for authentication
-	c.Redirect(http.StatusTemporaryRedirect, authURL)
+	ctx.Redirect(http.StatusTemporaryRedirect, authURL)
 }
 
 // Callback handles the response from Plex after user authentication.
-func (p *PlexController) Callback(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
-	defer cancel()
-
+func (p *PlexController) Callback(ctx *gin.Context) {
 	// Get the state from the URL query parameter
-	returnedState := c.Query("state")
-	session := sessions.Default(c)
+	returnedState := ctx.Query("state")
+	session := sessions.Default(ctx)
 
 	// Validate stored session state
 	cookieData, err := validateSessionState(session, returnedState)
 	if err != nil {
 		slog.Error("Session state validation failed", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -134,14 +128,14 @@ func (p *PlexController) Callback(c *gin.Context) {
 	pinStatus, err := p.checkPlexPin(ctx, cookieData.PinID)
 	if err != nil {
 		slog.Error("Failed to check PIN status", "error", err, "pin_id", cookieData.PinID)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check PIN status: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check PIN status: " + err.Error()})
 		return
 	}
 
 	// Check if the PIN has been claimed and we have an auth token
 	if pinStatus.AuthToken == "" {
 		slog.Warn("Authentication not completed", "pin_id", cookieData.PinID)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Authentication not completed. Please try again."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Authentication not completed. Please try again."})
 		return
 	}
 
@@ -149,7 +143,7 @@ func (p *PlexController) Callback(c *gin.Context) {
 	userInfo, err := p.getPlexUserInfo(ctx, pinStatus.AuthToken)
 	if err != nil {
 		slog.Error("Failed to verify token", "error", err)
-		c.JSON(http.StatusUnauthorized, gin.H{
+		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
 			"error":  "Failed to verify token: " + err.Error(),
 		})
@@ -159,18 +153,18 @@ func (p *PlexController) Callback(c *gin.Context) {
 	// Save user information to session
 	if err := saveUserSession(session, userInfo); err != nil {
 		slog.Error("Failed to save user session", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save user session"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save user session"})
 		return
 	}
 
 	// Determine where to redirect after successful authentication
 	redirectURL := "/"
-	if nextURL := c.Query("next"); nextURL != "" {
+	if nextURL := ctx.Query("next"); nextURL != "" {
 		redirectURL = nextURL
 	}
 
 	// Redirect to the appropriate URL
-	c.Redirect(http.StatusFound, redirectURL)
+	ctx.Redirect(http.StatusFound, redirectURL)
 }
 
 // generatePlexPin creates a new PIN for PIN-based authentication with Plex.
