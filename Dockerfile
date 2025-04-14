@@ -14,7 +14,8 @@ FROM gcr.io/distroless/static-debian11
 
 # Set multiple environment variables in a single layer
 ENV GIN_MODE=release \
-    PORT=8080
+    PORT=8080 \
+    PLEFI_SERVER__ADDRESS=0.0.0.0:8080
 
 COPY --from=base /main .
 # Add the views directory to the container
