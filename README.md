@@ -125,11 +125,6 @@ docker run -p 8080:8080 --env-file .env plefi
 - `GET /stripe/success` - Handle successful subscription checkout
 - `GET /stripe/cancel` - Handle cancelled subscription checkout
 
-### Wizarr Integration
-
-- Automatic generation of Plex server invites through Wizarr after successful subscription
-- Email delivery of invitation links to subscribers
-
 ## Configuration
 
 PleFi uses a hierarchical configuration system:
