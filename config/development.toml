@@ -1,0 +1,3 @@
+[proxy]
+enabled = true
+url = "https://localhost:8888"
