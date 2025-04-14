@@ -30,7 +30,6 @@ func NewAppController(client *http.Client, services *services.Services) *AppCont
 func (c *AppController) GetRoutes(r *gin.RouterGroup) {
 	// Load templates
 	r.GET("/health", c.Health)
-	r.GET("/whoami", c.WhoAmI)
 	r.GET("/logout", c.Logout)
 	r.GET("/", c.Index)
 
@@ -51,32 +50,6 @@ func (c *AppController) GetRoutes(r *gin.RouterGroup) {
 		stripeController := stripecontroller.NewStripeController(stripe.BasePath(), c.client, c.services)
 		stripeController.GetRoutes(stripe)
 	}
-}
-
-// WhoAmI returns the authenticated user's information from the session
-func (p AppController) WhoAmI(c *gin.Context) {
-	userInfo := sessions.Default(c).Get("user_info")
-	if userInfo == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"status": "error",
-			"error":  "Not authenticated",
-		})
-		return
-	}
-	var userInfoData model.UserInfo
-	err := json.Unmarshal(userInfo.([]byte), &userInfoData)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status": "error",
-			"error":  "Failed to parse user info: " + err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"user":   userInfoData,
-	})
 }
 
 // Logout clears the user session by deleting the user_info key
