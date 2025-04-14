@@ -19,8 +19,7 @@ func Init(env string) error {
 	defaultFileConfig.AddConfigPath("config/")
 	defaultFileConfig.SetConfigName("default")
 	if err = defaultFileConfig.ReadInConfig(); err != nil {
-		slog.Error("error on parsing default configuration file", "error", err)
-		return err
+		slog.Warn("error on parsing default configuration file", "error", err)
 	}
 
 	// Merge the environment configuration file
@@ -28,18 +27,16 @@ func Init(env string) error {
 	envFileConfig.AddConfigPath("config/")
 	envFileConfig.SetConfigName(env)
 	if err = envFileConfig.ReadInConfig(); err != nil {
-		slog.Error("error on parsing environment configuration file", "env", env, "error", err)
-		return err
+		slog.Warn("error on parsing environment configuration file", "env", env, "error", err)
 	}
 
 	if err = defaultFileConfig.MergeConfigMap(envFileConfig.AllSettings()); err != nil {
-		slog.Error("error on merging configuration file", "env", env, "error", err)
-		return err
+		slog.Warn("error on merging configuration file", "env", env, "error", err)
 	}
 
 	Config = viper.New()
 	if err = Config.MergeConfigMap(defaultFileConfig.AllSettings()); err != nil {
-		slog.Error("error on merging default configuration", "error", err)
+		slog.Warn("error on merging default configuration", "error", err)
 		return err
 	}
 	Config.SetConfigType("env")
