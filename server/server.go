@@ -15,8 +15,8 @@ type Server struct {
 }
 
 // Init initializes the server without starting it
-func Init() (*Server, error) {
-	r := NewRouter()
+func Init(client *http.Client) (*Server, error) {
+	r := NewRouter(client)
 	r.SetTrustedProxies(config.Config.GetStringSlice("server.trusted_proxies"))
 
 	srv := &Server{

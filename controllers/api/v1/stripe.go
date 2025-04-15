@@ -88,25 +88,24 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 		return
 	}
 
-	// Find Stripe customers by Plex user ID
-	customerList := &stripe.CustomerListParams{}
-	customerList.Filters.AddFilter("metadata[plex_user_id]", "", strconv.Itoa(userInfoData.ID))
-	var subscriptions []stripe.Subscription
-	// Iterate through all customers with this Plex user ID
-	it := customer.List(customerList)
-	for it.Next() {
-		cus := it.Customer()
+	customersIter := customer.Search(
+		&stripe.CustomerSearchParams{
+			SearchParams: stripe.SearchParams{
+				Query: fmt.Sprintf("metadata['plex_user_id']:'%s'", strconv.Itoa(userInfoData.ID)),
+			},
+		},
+	)
+	subscriptions := make([]stripe.Subscription, 0)
+	for customersIter.Next() {
+		cus := customersIter.Customer()
 
 		// Find all subscriptions for this customer
-		subList := &stripe.SubscriptionListParams{}
-		subList.Filters.AddFilter("customer", "", cus.ID)
-
-		// Include price and product data to show subscription details
-		subList.AddExpand("data.plan.product")
-
-		subIt := subscription.List(subList)
-		for subIt.Next() {
-			sub := subIt.Subscription()
+		subscriptionIter := subscription.List(&stripe.SubscriptionListParams{
+			Customer: stripe.String(cus.ID),
+			Status:   stripe.String("active"),
+		})
+		for subscriptionIter.Next() {
+			sub := subscriptionIter.Subscription()
 
 			// Only include non-empty subscriptions
 			if len(sub.Items.Data) == 0 {
@@ -116,12 +115,12 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 			subscriptions = append(subscriptions, *sub)
 		}
 
-		if err := subIt.Err(); err != nil {
+		if err := subscriptionIter.Err(); err != nil {
 			slog.Error("Error listing subscriptions", "error", err, "customer", cus.ID)
 		}
 	}
 
-	if err := it.Err(); err != nil {
+	if err := customersIter.Err(); err != nil {
 		slog.Error("Error listing customers", "error", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"status": "error",
@@ -134,6 +133,72 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":        "success",
 		"subscriptions": subscriptions,
+	})
+}
+
+// CancelSubscriptionRequest represents the request body for canceling a subscription
+type CancelSubscriptionRequest struct {
+	SubscriptionID string `json:"subscription_id" binding:"required"`
+}
+
+// CancelUserSubscription cancels a specific subscription for the authenticated user
+func (s *V1) CancelUserSubscription(ctx *gin.Context) {
+	// Check for authentication
+	userInfo, err := model.GetUserInfo(ctx)
+	if err != nil || userInfo == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "Authentication required",
+		})
+		return
+	}
+
+	// Parse request body to get subscription ID
+	var reqBody CancelSubscriptionRequest
+	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  "Invalid request: subscription_id is required",
+		})
+		return
+	}
+
+	subscription, err := s.services.Stripe.GetSubscription(ctx, userInfo, reqBody.SubscriptionID)
+	if err != nil {
+		slog.Error("Failed to retrieve subscription",
+			"error", err,
+			"subscription_id", reqBody.SubscriptionID,
+			"user_id", userInfo.ID)
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"status": "error",
+			"error":  "subscription not found",
+		})
+		return
+	}
+
+	// Cancel the specific subscription
+	updatedSub, err := s.services.Stripe.CancelAtEndSubscription(ctx, subscription.ID)
+	if err != nil {
+		slog.Error("Failed to cancel subscription",
+			"error", err,
+			"subscription_id", reqBody.SubscriptionID,
+			"user_id", userInfo.ID)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status": "error",
+			"error":  "Failed to cancel subscription",
+		})
+		return
+	}
+
+	slog.Info("Subscription canceled",
+		"subscription_id", updatedSub.ID,
+		"customer_id", updatedSub.Customer.ID,
+		"plex_user_id", userInfo.ID)
+
+	// Return success
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":       "success",
+		"subscription": updatedSub,
 	})
 }
 
@@ -280,4 +345,18 @@ func (s *V1) handleEntitlementRemoval(
 
 	slog.Info("Successfully unshared library with Plex user", "user_id", plexUserID, "customer", stripeCustomer.ID)
 	return nil
+}
+
+// parseUserInfo parses user info from the session
+func parseUserInfo(userInfo interface{}) (*model.UserInfo, error) {
+	var userInfoData model.UserInfo
+
+	if byteData, ok := userInfo.(string); ok {
+		if err := json.Unmarshal([]byte(byteData), &userInfoData); err != nil {
+			return nil, fmt.Errorf("invalid user info JSON: %w", err)
+		}
+		return &userInfoData, nil
+	}
+
+	return nil, fmt.Errorf("user info is not in expected string format")
 }

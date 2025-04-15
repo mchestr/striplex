@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -41,14 +44,29 @@ func initApp(environment string) (*server.Server, error) {
 		return nil, fmt.Errorf("config initialization error: %w", err)
 	}
 
+	// Create HTTP client with reasonable timeout
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	if config.Config.GetBool("proxy.enabled") {
+		proxyURL, _ := url.Parse(config.Config.GetString("proxy.url"))
+		httpClient.Transport = &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+	}
+
 	// Set Stripe API key
 	stripe.Key = config.Config.GetString("stripe.secret_key")
 	if stripe.Key == "" {
 		return nil, fmt.Errorf("stripe API key not configured")
 	}
+	stripe.SetHTTPClient(httpClient)
 
 	// Initialize server components
-	srv, err := server.Init()
+	srv, err := server.Init(httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("server initialization error: %w", err)
 	}

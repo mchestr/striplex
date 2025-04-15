@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"encoding/json"
+	"log/slog"
 	"net/http"
 	"plefi/config"
 	"plefi/model"
@@ -58,7 +58,6 @@ func (p AppController) Logout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Delete("user_info")
 	err := session.Save()
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "error",
@@ -78,34 +77,23 @@ func (h AppController) Health(ctx *gin.Context) {
 }
 
 // Index returns a styled HTML landing page for Striplex
-func (a *AppController) Index(c *gin.Context) {
+func (a *AppController) Index(ctx *gin.Context) {
 	// Get the default price ID from configuration
 	priceID := config.Config.GetString("stripe.default_price_id")
-
-	// Check if user is authenticated
-	session := sessions.Default(c)
-	userInfoData := session.Get("user_info")
-	isAuthenticated := userInfoData != nil
+	userInfo, err := model.GetUserInfo(ctx)
+	if err != nil {
+		slog.Warn("Failed to parse user info", "error", err)
+	}
 
 	// Prepare template data
 	templateData := gin.H{
-		"IsAuthenticated": isAuthenticated,
+		"IsAuthenticated": userInfo != nil,
 		"PriceID":         priceID,
-	}
-
-	// Extract username if authenticated
-	if isAuthenticated {
-		var userInfo model.UserInfo
-		// Handle the case when userInfo is stored as string instead of []byte
-		if strData, ok := userInfoData.(string); ok {
-			if err := json.Unmarshal([]byte(strData), &userInfo); err == nil {
-				templateData["UserInfo"] = userInfo
-			}
-		}
+		"UserInfo":        userInfo,
 	}
 
 	// Render the template with data
-	c.HTML(http.StatusOK, "index.tmpl", templateData)
+	ctx.HTML(http.StatusOK, "index.tmpl", templateData)
 }
 
 // Subscriptions displays the subscriptions management page
