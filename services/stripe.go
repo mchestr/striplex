@@ -26,8 +26,14 @@ type StripeServicer interface {
 	// CreateCustomer creates a new Stripe customer from Plex user info
 	CreateCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error)
 
+	// CreateAnonymousCustomer creates a customer for anonymous donations
+	CreateAnonymousCustomer(ctx context.Context) (*stripe.Customer, error)
+
 	// CreateSubscriptionCheckoutSession creates a checkout session for subscription purchase
 	CreateSubscriptionCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error)
+
+	// CreateOneTimeCheckoutSession creates a checkout session for one-time payment
+	CreateOneTimeCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error)
 
 	// GetSubscription retrieves a subscription and verifies it belongs to the user
 	GetSubscription(ctx context.Context, userInfo *model.UserInfo, subscriptionID string) (*stripe.Subscription, error)
@@ -104,6 +110,18 @@ func (s *StripeService) CreateCustomer(ctx context.Context, user *model.UserInfo
 	return customer.New(customerParams)
 }
 
+// CreateAnonymousCustomer creates a customer for anonymous donations
+func (s *StripeService) CreateAnonymousCustomer(ctx context.Context) (*stripe.Customer, error) {
+	slog.Info("Creating an anonymous Stripe customer for donation")
+
+	return customer.New(&stripe.CustomerParams{
+		Description: stripe.String("Anonymous donation customer"),
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	})
+}
+
 func (s *StripeService) CreateSubscriptionCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error) {
 	slog.Info("Creating a new Stripe subscription checkout session",
 		"plex_id", user.ID,
@@ -124,6 +142,41 @@ func (s *StripeService) CreateSubscriptionCheckoutSession(ctx context.Context, s
 			},
 		},
 		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		SuccessURL: stripe.String(successURL),
+		CancelURL:  stripe.String(cancelURL),
+		Customer:   stripe.String(sCustomer.ID),
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	})
+}
+
+func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error) {
+	// Log with user info if available
+	if user != nil {
+		slog.Info("Creating a new Stripe donation checkout session",
+			"plex_id", user.ID,
+			"email", user.Email,
+			"username", user.Username)
+	} else {
+		slog.Info("Creating an anonymous donation checkout session")
+	}
+
+	priceID := config.Config.GetString("stripe.donation_price_id")
+	hostname := config.Config.GetString("server.hostname")
+	successURL := fmt.Sprintf("https://%s/stripe/donation-success", hostname)
+	cancelURL := fmt.Sprintf("https://%s/stripe/cancel?price_id=%s", hostname, priceID)
+
+	// Create a Stripe checkout session for the customer
+	return session.New(&stripe.CheckoutSessionParams{
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				Price:    stripe.String(priceID),
+				Quantity: stripe.Int64(1),
+			},
+		},
+		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
 		SuccessURL: stripe.String(successURL),
 		CancelURL:  stripe.String(cancelURL),
 		Customer:   stripe.String(sCustomer.ID),
@@ -168,4 +221,5 @@ func (s *StripeService) CancelAtEndSubscription(ctx context.Context, subscriptio
 			Context: ctx,
 		},
 	})
+
 }

@@ -275,6 +275,26 @@
             width: 24px;
             height: 24px;
         }
+        .donate-btn {
+            background-color: #27ae60;
+            color: #ffffff;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.15);
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+        .donate-btn:hover {
+            background-color: #219653;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.25);
+        }
         @media (max-width: 640px) {
             .container {
                 padding: 2rem;
@@ -308,8 +328,10 @@
         <div class="button-container">
             {{ if .IsAuthenticated }}
                 <a href="/subscriptions" class="checkout-btn">Manage Subscriptions</a>
+                <a href="/stripe/donation-checkout" class="donate-btn">Make a Donation</a>
             {{ else }}
-                <button class="checkout-btn" onclick="window.location.href='/stripe/checkout?price_id={{ .PriceID }}'">Sign in to Subscribe</button>
+                <button class="checkout-btn" onclick="window.location.href='/stripe/checkout?price_id={{ .PriceID }}'">Subscribe to Get Instant Access</button>
+                <a href="/stripe/donation-checkout" class="donate-btn">Make a Donation</a>
             {{ end }}
         </div>
         
