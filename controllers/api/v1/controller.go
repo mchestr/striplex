@@ -24,5 +24,7 @@ func (v *V1) GetRoutes(r *gin.RouterGroup) {
 	stripe := r.Group("/stripe")
 	{
 		stripe.POST("/webhook", v.Webhook)
+		// Add new route for subscriptions
+		stripe.GET("/subscriptions", v.GetSubscriptions)
 	}
 }

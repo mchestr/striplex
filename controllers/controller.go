@@ -32,6 +32,7 @@ func (c *AppController) GetRoutes(r *gin.RouterGroup) {
 	r.GET("/health", c.Health)
 	r.GET("/logout", c.Logout)
 	r.GET("/", c.Index)
+	r.GET("/subscriptions", c.Subscriptions)
 
 	api := r.Group("/api")
 	{
@@ -105,4 +106,19 @@ func (a *AppController) Index(c *gin.Context) {
 
 	// Render the template with data
 	c.HTML(http.StatusOK, "index.tmpl", templateData)
+}
+
+// Subscriptions displays the subscriptions management page
+func (a *AppController) Subscriptions(c *gin.Context) {
+	// Check if user is authenticated
+	session := sessions.Default(c)
+	userInfo := session.Get("user_info")
+	if userInfo == nil {
+		// If not authenticated, redirect to home page
+		c.Redirect(http.StatusFound, "/")
+		return
+	}
+
+	// Render the subscriptions template
+	c.HTML(http.StatusOK, "subscriptions.tmpl", gin.H{})
 }

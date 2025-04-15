@@ -8,17 +8,16 @@ import (
 	"log/slog"
 	"net/http"
 	"plefi/config"
+	"plefi/model"
+	"strconv"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/customer"
+	"github.com/stripe/stripe-go/v82/subscription"
 	"github.com/stripe/stripe-go/v82/webhook"
 )
-
-// EntitlementPreviousAttributes represents the structure of previous attributes in webhook events
-type EntitlementPreviousAttributes struct {
-	Entitlements stripe.EntitlementsActiveEntitlementList `json:"entitlements"`
-}
 
 // Webhook handles incoming webhook events from Stripe.
 func (s *V1) Webhook(ctx *gin.Context) {
@@ -56,6 +55,86 @@ func (s *V1) Webhook(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
+}
+
+// GetSubscriptions retrieves all subscriptions for the authenticated user
+func (s *V1) GetSubscriptions(ctx *gin.Context) {
+	// Check user authentication
+	session := sessions.Default(ctx)
+	userInfo := session.Get("user_info")
+	if userInfo == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"status": "error",
+			"error":  "Authentication required",
+		})
+		return
+	}
+
+	// Parse user info
+	var userInfoData model.UserInfo
+	if userInfoString, ok := userInfo.(string); ok {
+		if err := json.Unmarshal([]byte(userInfoString), &userInfoData); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"status": "error",
+				"error":  "Invalid session data",
+			})
+			return
+		}
+	} else {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status": "error",
+			"error":  "Unexpected session data format",
+		})
+		return
+	}
+
+	// Find Stripe customers by Plex user ID
+	customerList := &stripe.CustomerListParams{}
+	customerList.Filters.AddFilter("metadata[plex_user_id]", "", strconv.Itoa(userInfoData.ID))
+	var subscriptions []stripe.Subscription
+	// Iterate through all customers with this Plex user ID
+	it := customer.List(customerList)
+	for it.Next() {
+		cus := it.Customer()
+
+		// Find all subscriptions for this customer
+		subList := &stripe.SubscriptionListParams{}
+		subList.Filters.AddFilter("customer", "", cus.ID)
+
+		// Include price and product data to show subscription details
+		subList.AddExpand("data.plan.product")
+
+		subIt := subscription.List(subList)
+		for subIt.Next() {
+			sub := subIt.Subscription()
+
+			// Only include non-empty subscriptions
+			if len(sub.Items.Data) == 0 {
+				continue
+			}
+			// Add subscription to results
+			subscriptions = append(subscriptions, *sub)
+		}
+
+		if err := subIt.Err(); err != nil {
+			slog.Error("Error listing subscriptions", "error", err, "customer", cus.ID)
+		}
+	}
+
+	if err := it.Err(); err != nil {
+		slog.Error("Error listing customers", "error", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status": "error",
+			"error":  "Failed to retrieve customer data",
+		})
+		return
+	}
+
+	// Return subscriptions data
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":        "success",
+		"subscriptions": subscriptions,
+	})
 }
 
 // processWebhookEvent handles different types of Stripe webhook events
@@ -99,7 +178,7 @@ func (s *V1) processWebhookEvent(ctx context.Context, event stripe.Event) error 
 }
 
 // parseEntitlementEventData extracts the entitlement summary and previous attributes from an event
-func parseEntitlementEventData(event stripe.Event) (*stripe.EntitlementsActiveEntitlementSummary, *EntitlementPreviousAttributes, error) {
+func parseEntitlementEventData(event stripe.Event) (*stripe.EntitlementsActiveEntitlementSummary, *stripe.EntitlementsActiveEntitlementSummary, error) {
 	// Convert event.Data.Object to JSON and then to EntitlementsActiveEntitlementSummary
 	rawJSON, err := json.Marshal(event.Data.Object)
 	if err != nil {
@@ -111,7 +190,7 @@ func parseEntitlementEventData(event stripe.Event) (*stripe.EntitlementsActiveEn
 		return nil, nil, fmt.Errorf("failed to unmarshal event data to summary: %w", err)
 	}
 
-	var prevAttrs EntitlementPreviousAttributes
+	var prevAttrs stripe.EntitlementsActiveEntitlementSummary
 	// Process previous attributes if they exist
 	if event.Data.PreviousAttributes != nil {
 		prevAttrsJSON, err := json.Marshal(event.Data.PreviousAttributes)
