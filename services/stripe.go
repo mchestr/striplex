@@ -15,6 +15,30 @@ import (
 	"github.com/stripe/stripe-go/v82/subscription"
 )
 
+// StripeServicer defines the interface for Stripe payment operations
+type StripeServicer interface {
+	// GetCustomer retrieves an existing Stripe customer by Plex user ID
+	GetCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error)
+
+	// GetOrCreateCustomer retrieves a customer or creates one if it doesn't exist
+	GetOrCreateCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error)
+
+	// CreateCustomer creates a new Stripe customer from Plex user info
+	CreateCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error)
+
+	// CreateSubscriptionCheckoutSession creates a checkout session for subscription purchase
+	CreateSubscriptionCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error)
+
+	// GetSubscription retrieves a subscription and verifies it belongs to the user
+	GetSubscription(ctx context.Context, userInfo *model.UserInfo, subscriptionID string) (*stripe.Subscription, error)
+
+	// CancelAtEndSubscription cancels a subscription at the end of the current period
+	CancelAtEndSubscription(ctx context.Context, subscriptionID string) (*stripe.Subscription, error)
+}
+
+// Verify that StripeService implements the StripeServicer interface
+var _ StripeServicer = (*StripeService)(nil)
+
 type StripeService struct {
 	client *http.Client
 }

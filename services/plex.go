@@ -12,6 +12,21 @@ import (
 	"strings"
 )
 
+// PlexServicer defines the interface for Plex Media Server API operations
+type PlexServicer interface {
+	// UnshareLibrary removes a user's access to the Plex server
+	UnshareLibrary(ctx context.Context, userID string) error
+
+	// ShareLibrary shares specific libraries with a Plex user
+	ShareLibrary(ctx context.Context, email string) error
+
+	// GetSectionIDsByNames retrieves section IDs that match the provided section names
+	GetSectionIDsByNames(ctx context.Context, sectionNames []string) ([]int, error)
+}
+
+// Verify that PlexService implements the PlexServicer interface
+var _ PlexServicer = (*PlexService)(nil)
+
 // PlexService handles interactions with the Plex Media Server API
 type PlexService struct {
 	client   *http.Client

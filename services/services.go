@@ -3,8 +3,8 @@ package services
 import "net/http"
 
 type Services struct {
-	Plex   *PlexService
-	Stripe *StripeService
+	Plex   PlexServicer
+	Stripe StripeServicer
 }
 
 func NewServices(client *http.Client) *Services {
