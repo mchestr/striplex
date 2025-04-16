@@ -85,13 +85,6 @@ func (s *StripeController) CreateDonationCheckoutSession(ctx *gin.Context) {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customer"})
 			return
 		}
-	} else {
-		customer, err = s.services.Stripe.CreateAnonymousCustomer(ctx)
-		if err != nil {
-			slog.Error("Failed to create anonymous customer", "error", err)
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create customer"})
-			return
-		}
 	}
 
 	// Create donation checkout session

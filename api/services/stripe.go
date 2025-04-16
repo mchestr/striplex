@@ -166,9 +166,7 @@ func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCusto
 	hostname := config.Config.GetString("server.hostname")
 	successURL := fmt.Sprintf("https://%s/stripe/donation-success", hostname)
 	cancelURL := fmt.Sprintf("https://%s/stripe/cancel?price_id=%s", hostname, priceID)
-
-	// Create a Stripe checkout session for the customer
-	return session.New(&stripe.CheckoutSessionParams{
+	params := &stripe.CheckoutSessionParams{
 		PaymentMethodTypes: stripe.StringSlice(config.Config.GetStringSlice("stripe.payment_method_types")),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
@@ -179,11 +177,16 @@ func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCusto
 		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
 		SuccessURL: stripe.String(successURL),
 		CancelURL:  stripe.String(cancelURL),
-		Customer:   stripe.String(sCustomer.ID),
 		Params: stripe.Params{
 			Context: ctx,
 		},
-	})
+	}
+	if sCustomer != nil {
+		params.Customer = stripe.String(sCustomer.ID)
+	}
+
+	// Create a Stripe checkout session for the customer
+	return session.New(params)
 }
 
 func (s *StripeService) GetSubscription(ctx context.Context, userInfo *models.UserInfo, subscriptionID string) (*stripe.Subscription, error) {
