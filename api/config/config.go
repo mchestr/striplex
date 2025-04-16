@@ -43,5 +43,11 @@ func Init(env string) error {
 	Config.SetEnvPrefix("plefi")
 	Config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
 	Config.AutomaticEnv()
+	setDefaults()
 	return nil
+}
+
+func setDefaults() {
+	Config.SetDefault("server.address", ":8080")
+	Config.SetDefault("stripe.payment_method_types", []string{"card"})
 }

@@ -169,7 +169,7 @@ func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCusto
 
 	// Create a Stripe checkout session for the customer
 	return session.New(&stripe.CheckoutSessionParams{
-		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		PaymentMethodTypes: stripe.StringSlice(config.Config.GetStringSlice("stripe.payment_method_types")),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				Price:    stripe.String(priceID),
