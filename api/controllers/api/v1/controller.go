@@ -21,6 +21,11 @@ func NewV1Controller(basePath string, client *http.Client, services *services.Se
 	}
 }
 func (v *V1) GetRoutes(r *gin.RouterGroup) {
+	user := r.Group("/user")
+	{
+		user.GET("/me", v.GetCurrentUser)
+	}
+
 	stripe := r.Group("/stripe")
 	{
 		stripe.POST("/webhook", v.Webhook)

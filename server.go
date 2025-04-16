@@ -51,6 +51,7 @@ func initApp(environment string) (*server.Server, error) {
 		Timeout: 10 * time.Second,
 	}
 	if config.Config.GetBool("proxy.enabled") {
+		slog.Info("Proxy enabled, setting up HTTP client with proxy")
 		proxyURL, _ := url.Parse(config.Config.GetString("proxy.url"))
 		httpClient.Transport = &http.Transport{
 			Proxy: http.ProxyURL(proxyURL),

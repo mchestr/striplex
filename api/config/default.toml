@@ -1,8 +1,5 @@
 [plex]
 client_id = "plefi"
 
-[wizarr]
-invite_expiration = "43800m"
-
 [proxy]
 enabled = false

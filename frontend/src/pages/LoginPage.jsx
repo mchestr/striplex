@@ -1,8 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import BuyMeCoffee from '../components/BuyMeCoffee';
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const response = await fetch('/api/v1/user/me');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'success' && data.user) {
+            // User is authenticated, redirect to home or dashboard
+            navigate('/');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthentication();
+  }, [navigate]);
 
   const handlePlexSignIn = async () => {
     setIsLoading(true);
@@ -17,7 +42,7 @@ const LoginPage = () => {
       
       // Open popup window for Plex authentication
       const popup = window.open(
-        '/plex/auth',
+        '/plex/auth?next=/login-success',
         'plexAuthWindow',
         `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,status=yes`
       );
@@ -29,10 +54,21 @@ const LoginPage = () => {
         return;
       }
       
+      // Listen for messages from the popup window
+      const messageHandler = (event) => {
+        if (event.data.type === 'PLEX_AUTH_SUCCESS') {
+          window.removeEventListener('message', messageHandler);
+          // Redirect to home page after successful authentication
+          navigate('/');
+        }
+      };
+      window.addEventListener('message', messageHandler);
+      
       // Create an interval to check when the popup is closed
       const checkPopupClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkPopupClosed);
+          window.removeEventListener('message', messageHandler);
           setIsLoading(false);
         }
       }, 500);
@@ -42,6 +78,14 @@ const LoginPage = () => {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen overflow-x-hidden">
@@ -73,16 +117,7 @@ const LoginPage = () => {
         </div>
         
         {/* Buy Me a Coffee section */}
-        <div className="mt-8 py-6 px-4 rounded-lg bg-[#303842] w-full max-w-md">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-white">Just want to say thanks?</h3>
-            <div className="mt-4">
-              <a href="/stripe/donation-checkout" className="inline-block hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200">
-                <img className="h-12" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" />
-              </a>
-            </div>
-          </div>
-        </div>
+        <BuyMeCoffee />
       </div>
     </div>
   );
