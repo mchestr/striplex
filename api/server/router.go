@@ -2,9 +2,9 @@ package server
 
 import (
 	"net/http"
-	"plefi/config"
-	"plefi/controllers"
-	"plefi/services"
+	"plefi/api/config"
+	"plefi/api/controllers"
+	"plefi/api/services"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -17,7 +17,7 @@ func NewRouter(svcs *services.Services, client *http.Client) *gin.Engine {
 	router := gin.Default()
 
 	// Set up HTML rendering
-	router.LoadHTMLGlob("views/*")
+	router.LoadHTMLGlob("api/views/*")
 
 	// Set Gin mode based on configuration
 	gin.SetMode(config.Config.GetString("server.mode"))

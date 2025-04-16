@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"net/http"
-	"plefi/config"
-	"plefi/services"
+	"plefi/api/config"
+	"plefi/api/services"
 
 	"github.com/gin-gonic/gin"
 )

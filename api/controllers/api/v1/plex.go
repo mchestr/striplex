@@ -3,8 +3,8 @@ package v1controller
 import (
 	"log/slog"
 	"net/http"
-	"plefi/config"
-	"plefi/models"
+	"plefi/api/config"
+	"plefi/api/models"
 
 	"github.com/gin-gonic/gin"
 )

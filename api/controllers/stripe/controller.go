@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"plefi/config"
-	"plefi/models"
-	"plefi/services"
+	"plefi/api/config"
+	"plefi/api/models"
+	"plefi/api/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v82"

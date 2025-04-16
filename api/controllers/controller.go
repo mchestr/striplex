@@ -1,18 +1,16 @@
 package controllers
 
 import (
-	"log/slog"
 	"net/http"
-	"plefi/config"
-	"plefi/models"
-	"plefi/services"
+	"plefi/api/models"
+	"plefi/api/services"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	apicontroller "plefi/controllers/api"
-	plexcontroller "plefi/controllers/plex"
-	stripecontroller "plefi/controllers/stripe"
+	apicontroller "plefi/api/controllers/api"
+	plexcontroller "plefi/api/controllers/plex"
+	stripecontroller "plefi/api/controllers/stripe"
 )
 
 type AppController struct {
@@ -33,6 +31,7 @@ func (c *AppController) GetRoutes(r *gin.RouterGroup) {
 	r.GET("/logout", c.Logout)
 	r.GET("/", c.Index)
 	r.GET("/subscriptions", c.Subscriptions)
+	r.GET("/login", c.Login)
 
 	api := r.Group("/api")
 	{
@@ -76,24 +75,27 @@ func (h AppController) Health(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
-// Index returns a styled HTML landing page for Striplex
+// Login renders the login page for unauthenticated users
+func (a *AppController) Login(ctx *gin.Context) {
+	userInfo, _ := models.GetUserInfo(ctx)
+
+	// If user is already authenticated, redirect to home page
+	if userInfo != nil {
+		ctx.Redirect(http.StatusFound, "/")
+		return
+	}
+
+	// Render the login template
+	ctx.HTML(http.StatusOK, "login.tmpl", gin.H{
+		"IsAuthenticated": false,
+	})
+}
+
+// Index serves the React frontend's index.html for the Single Page Application
 func (a *AppController) Index(ctx *gin.Context) {
-	// Get the default price ID from configuration
-	priceID := config.Config.GetString("stripe.default_price_id")
-	userInfo, err := models.GetUserInfo(ctx)
-	if err != nil {
-		slog.Warn("Failed to parse user info", "error", err)
-	}
-
-	// Prepare template data
-	templateData := gin.H{
-		"IsAuthenticated": userInfo != nil,
-		"PriceID":         priceID,
-		"UserInfo":        userInfo,
-	}
-
-	// Render the template with data
-	ctx.HTML(http.StatusOK, "index.tmpl", templateData)
+	// For Single Page Applications, we need to serve the index.html file
+	// for all routes that don't match static assets
+	ctx.File("./frontend/build/index.html")
 }
 
 // Subscriptions displays the subscriptions management page

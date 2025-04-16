@@ -11,9 +11,9 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"plefi/config"
-	"plefi/models"
-	"plefi/services"
+	"plefi/api/config"
+	"plefi/api/models"
+	"plefi/api/services"
 	"time"
 
 	"github.com/gin-contrib/sessions"

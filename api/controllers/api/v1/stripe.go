@@ -7,8 +7,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"plefi/config"
-	"plefi/models"
+	"plefi/api/config"
+	"plefi/api/models"
 	"strconv"
 
 	"github.com/gin-contrib/sessions"

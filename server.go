@@ -14,9 +14,9 @@ import (
 	"syscall"
 	"time"
 
-	"plefi/config"
-	"plefi/server"
-	"plefi/services"
+	"plefi/api/config"
+	"plefi/api/server"
+	"plefi/api/services"
 
 	"github.com/stripe/stripe-go/v82"
 )

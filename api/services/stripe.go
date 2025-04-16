@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"plefi/config"
-	"plefi/models"
+	"plefi/api/config"
+	"plefi/api/models"
 	"strconv"
 
 	"github.com/stripe/stripe-go/v82"
