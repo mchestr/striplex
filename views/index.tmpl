@@ -276,24 +276,27 @@
             height: 24px;
         }
         .donate-btn {
-            background-color: #27ae60;
-            color: #ffffff;
+            background-color: #ffb26b;
+            color: #7d5a50;
             border: none;
             padding: 0.9rem 2rem;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.15);
+            box-shadow: 0 4px 12px rgba(255, 178, 107, 0.25);
             text-decoration: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             margin-top: 1rem;
         }
         .donate-btn:hover {
-            background-color: #219653;
+            background-color: #ffc988;
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.25);
+            box-shadow: 0 6px 16px rgba(255, 178, 107, 0.35);
         }
         @media (max-width: 640px) {
             .container {
@@ -315,7 +318,6 @@
             <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
         </svg>
     </button>
-
     <div class="container">
         {{ if .IsAuthenticated }}
             <div class="greeting">
@@ -328,18 +330,16 @@
         <div class="button-container">
             {{ if .IsAuthenticated }}
                 <a href="/subscriptions" class="checkout-btn">Manage Subscriptions</a>
-                <a href="/stripe/donation-checkout" class="donate-btn">Make a Donation</a>
+                <a href="/stripe/donation-checkout" class="donate-btn">☕ Buy me a coffee</a>
             {{ else }}
                 <button class="checkout-btn" onclick="window.location.href='/stripe/checkout?price_id={{ .PriceID }}'">Subscribe to Get Instant Access</button>
-                <a href="/stripe/donation-checkout" class="donate-btn">Buy me a coffee</a>
+                <a href="/stripe/donation-checkout" class="donate-btn">☕ Buy me a coffee</a>
             {{ end }}
         </div>
-        
         {{ if .IsAuthenticated }}
         <button id="logoutButton" class="logout-btn">Sign out</button>
         {{ end }}
     </div>
-    
     <!-- Confirmation Modal -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
@@ -352,7 +352,6 @@
             </div>
         </div>
     </div>
-
     <script>
         // Get modal elements
         const modal = document.getElementById('confirmationModal');
@@ -361,17 +360,13 @@
         const closeModalBtn = document.getElementById('cancelModal');
         const statusMessage = document.getElementById('statusMessage');
         const logoutButton = document.getElementById('logoutButton');
-        
         // Theme toggle elements
         const themeToggle = document.getElementById('themeToggle');
         const moonIcon = document.getElementById('moonIcon');
         const sunIcon = document.getElementById('sunIcon');
-        
         // Check for saved theme preference or use preferred color scheme
         const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const savedTheme = localStorage.getItem('theme');
-        
-        // Initialize theme
         if (savedTheme === 'dark' || (!savedTheme && prefersDarkMode)) {
             document.body.classList.add('dark-mode');
             moonIcon.style.display = 'none';
@@ -381,11 +376,9 @@
             moonIcon.style.display = 'block';
             sunIcon.style.display = 'none';
         }
-        
         // Theme toggle functionality
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
-            
             if (document.body.classList.contains('dark-mode')) {
                 localStorage.setItem('theme', 'dark');
                 moonIcon.style.display = 'none';
@@ -396,7 +389,6 @@
                 sunIcon.style.display = 'none';
             }
         });
-
         // Handle logout via JavaScript
         if (logoutButton) {
             logoutButton.addEventListener('click', async function() {
@@ -408,7 +400,6 @@
                         },
                         credentials: 'same-origin'
                     });
-                    
                     if (response.ok) {
                         // Reload the page to reflect logged out state
                         window.location.reload();
@@ -424,28 +415,24 @@
                 }
             });
         }
-
         // Show modal when cancel button is clicked
         if (cancelBtn) {
             cancelBtn.addEventListener('click', function() {
                 modal.style.display = 'block';
             });
         }
-
         // Hide modal when close button is clicked
         if (closeModalBtn) {
             closeModalBtn.addEventListener('click', function() {
                 modal.style.display = 'none';
             });
         }
-
         // Hide modal when clicking outside of it
         window.addEventListener('click', function(event) {
             if (event.target === modal) {
                 modal.style.display = 'none';
             }
         });
-
         // Handle subscription cancellation
         if (confirmBtn) {
             confirmBtn.addEventListener('click', async function() {
@@ -456,9 +443,7 @@
                             'Content-Type': 'application/json',
                         }
                     });
-                    
                     const result = await response.json();
-                    
                     if (response.ok) {
                         statusMessage.textContent = result.message;
                         statusMessage.className = 'status-message success';
@@ -470,7 +455,6 @@
                     statusMessage.textContent = 'An error occurred while processing your request';
                     statusMessage.className = 'status-message error';
                 }
-                
                 statusMessage.style.display = 'block';
                 modal.style.display = 'none';
             });
