@@ -340,24 +340,8 @@
         <button id="logoutButton" class="logout-btn">Sign out</button>
         {{ end }}
     </div>
-    <!-- Confirmation Modal -->
-    <div id="confirmationModal" class="modal">
-        <div class="modal-content">
-            <h2>Cancel Subscription</h2>
-            <p>Are you sure you want to cancel your subscription?</p>
-            <p>Your subscription will remain active until the end of the current billing cycle.</p>
-            <div class="modal-buttons">
-                <button id="confirmCancel" class="confirm-btn">Yes, Cancel</button>
-                <button id="cancelModal" class="cancel-modal-btn">No, Keep Subscription</button>
-            </div>
-        </div>
-    </div>
     <script>
         // Get modal elements
-        const modal = document.getElementById('confirmationModal');
-        const cancelBtn = document.getElementById('cancelSubscription');
-        const confirmBtn = document.getElementById('confirmCancel');
-        const closeModalBtn = document.getElementById('cancelModal');
         const statusMessage = document.getElementById('statusMessage');
         const logoutButton = document.getElementById('logoutButton');
         // Theme toggle elements
@@ -413,50 +397,6 @@
                     // Fallback to direct navigation if there's an error
                     window.location.href = '/logout';
                 }
-            });
-        }
-        // Show modal when cancel button is clicked
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', function() {
-                modal.style.display = 'block';
-            });
-        }
-        // Hide modal when close button is clicked
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', function() {
-                modal.style.display = 'none';
-            });
-        }
-        // Hide modal when clicking outside of it
-        window.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-        // Handle subscription cancellation
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', async function() {
-                try {
-                    const response = await fetch('/stripe/cancel-subscription', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    const result = await response.json();
-                    if (response.ok) {
-                        statusMessage.textContent = result.message;
-                        statusMessage.className = 'status-message success';
-                    } else {
-                        statusMessage.textContent = result.error || 'Failed to cancel subscription';
-                        statusMessage.className = 'status-message error';
-                    }
-                } catch (error) {
-                    statusMessage.textContent = 'An error occurred while processing your request';
-                    statusMessage.className = 'status-message error';
-                }
-                statusMessage.style.display = 'block';
-                modal.style.display = 'none';
             });
         }
     </script>
