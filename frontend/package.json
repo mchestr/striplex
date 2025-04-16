@@ -17,6 +17,7 @@
     "@babel/core": "^7.23.3",
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.23.3",
+    "@tailwindcss/postcss": "^4.1.4",
     "autoprefixer": "^10.4.16",
     "babel-loader": "^10.0.0",
     "clean-webpack-plugin": "^4.0.0",
