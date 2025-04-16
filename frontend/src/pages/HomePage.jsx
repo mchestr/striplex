@@ -1,35 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BuyMeCoffee from '../components/BuyMeCoffee';
 
 function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [hasPlexAccess, setHasPlexAccess] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuthentication = async () => {
+    const checkPlexAccess = async () => {
       try {
-        const response = await fetch('/api/v1/user/me');
+        const response = await fetch('/api/v1/plex/check-access');
         if (response.ok) {
           const data = await response.json();
-          if (!data.user) {
-            // User is not authenticated, redirect to login
-            navigate('/login');
-          }
+          setHasPlexAccess(data.has_access || false);
         } else {
-          // Error with API, assume not authenticated
-          navigate('/login');
+          setHasPlexAccess(false);
         }
       } catch (error) {
-        console.error('Error checking authentication:', error);
-        navigate('/login');
+        console.error('Error checking Plex access:', error);
+        setHasPlexAccess(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkAuthentication();
-  }, [navigate]);
+    checkPlexAccess();
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      const response = await fetch('/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        navigate('/login');
+      } else {
+        console.error('Failed to sign out');
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -45,24 +58,45 @@ function HomePage() {
         <h1 className="text-4xl md:text-[3.5rem] font-extrabold mb-6 tracking-tight text-[#f1f2f6] leading-tight">PleFi</h1>
         
         <div className="mb-6 text-blue-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+          {hasPlexAccess === true ? (
+            <div className="text-green-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          ) : (
+            <div className="text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+          )}
         </div>
         
-        <p className="text-lg mb-8 text-[#f1f2f6]">You are now authenticated and have access to Plex content.</p>
+        <p className="text-lg mb-8 text-[#f1f2f6]">
+          {hasPlexAccess === true 
+            ? "You have access to Plex content." 
+            : "You do not have access to Plex content."}
+        </p>
         
-        <div className="space-y-6">
+        <div className="space-y-4 mb-6">
           <button
-            onClick={() => window.location.href = '/api/v1/plex/check-access'}
-            className="w-full flex items-center justify-center bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold py-3.5 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 text-lg"
+            onClick={() => navigate('/subscriptions')}
+            className="w-full flex items-center justify-center bg-[#2c3e50] hover:bg-[#34495e] text-[#f1f2f6] font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
           >
-            Check Plex Access
+            Manage Subscriptions
           </button>
         </div>
         
-        {/* Add the Buy Me a Coffee component */}
-        <BuyMeCoffee />
+        {/* Sign out link */}
+        <div className="mt-8">
+          <button 
+            onClick={handleSignOut}
+            className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   );

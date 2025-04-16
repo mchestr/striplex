@@ -27,7 +27,7 @@ func NewAppController(client *http.Client, services *services.Services) *AppCont
 func (c *AppController) GetRoutes(r *gin.RouterGroup) {
 	// Load templates
 	r.GET("/health", c.Health)
-	r.GET("/logout", c.Logout)
+	r.POST("/logout", c.Logout)
 
 	api := r.Group("/api")
 	{

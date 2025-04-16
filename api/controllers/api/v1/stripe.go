@@ -57,6 +57,30 @@ func (s *V1) Webhook(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
+// SubscriptionItem represents a simplified subscription item
+type SubscriptionItem struct {
+	ID               string `json:"id"`
+	CurrentPeriodEnd int64  `json:"current_period_end"`
+	Price            struct {
+		UnitAmount int64  `json:"unit_amount"`
+		Currency   string `json:"currency"`
+		Recurring  struct {
+			Interval string `json:"interval"`
+		} `json:"recurring"`
+		Product struct {
+			Name string `json:"name"`
+		} `json:"product"`
+	} `json:"price"`
+}
+
+// SimplifiedSubscription represents minimal subscription data needed by frontend
+type SimplifiedSubscription struct {
+	ID                string             `json:"id"`
+	Status            string             `json:"status"`
+	CancelAtPeriodEnd bool               `json:"cancel_at_period_end"`
+	Items             []SubscriptionItem `json:"items"`
+}
+
 // GetSubscriptions retrieves all subscriptions for the authenticated user
 func (s *V1) GetSubscriptions(ctx *gin.Context) {
 	// Check user authentication
@@ -95,7 +119,9 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 			},
 		},
 	)
-	subscriptions := make([]stripe.Subscription, 0)
+
+	simplifiedSubs := make([]SimplifiedSubscription, 0)
+
 	for customersIter.Next() {
 		cus := customersIter.Customer()
 
@@ -104,6 +130,7 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 			Customer: stripe.String(cus.ID),
 			Status:   stripe.String("active"),
 		})
+
 		for subscriptionIter.Next() {
 			sub := subscriptionIter.Subscription()
 
@@ -111,8 +138,39 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 			if len(sub.Items.Data) == 0 {
 				continue
 			}
-			// Add subscription to results
-			subscriptions = append(subscriptions, *sub)
+
+			// Create simplified subscription
+			simplifiedSub := SimplifiedSubscription{
+				ID:                sub.ID,
+				Status:            string(sub.Status),
+				CancelAtPeriodEnd: sub.CancelAtPeriodEnd,
+				Items:             make([]SubscriptionItem, 0, len(sub.Items.Data)),
+			}
+
+			// Add simplified items
+			for _, item := range sub.Items.Data {
+				simpleItem := SubscriptionItem{
+					ID:               item.ID,
+					CurrentPeriodEnd: item.CurrentPeriodEnd,
+				}
+
+				if item.Price != nil {
+					simpleItem.Price.UnitAmount = item.Price.UnitAmount
+					simpleItem.Price.Currency = string(item.Price.Currency)
+
+					if item.Price.Recurring != nil {
+						simpleItem.Price.Recurring.Interval = string(item.Price.Recurring.Interval)
+					}
+
+					if item.Price.Product != nil {
+						simpleItem.Price.Product.Name = item.Price.Product.Name
+					}
+				}
+
+				simplifiedSub.Items = append(simplifiedSub.Items, simpleItem)
+			}
+
+			simplifiedSubs = append(simplifiedSubs, simplifiedSub)
 		}
 
 		if err := subscriptionIter.Err(); err != nil {
@@ -132,7 +190,7 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 	// Return subscriptions data
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":        "success",
-		"subscriptions": subscriptions,
+		"subscriptions": simplifiedSubs,
 	})
 }
 
