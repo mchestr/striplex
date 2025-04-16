@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"plefi/config"
+	"plefi/models"
 	"strings"
 )
 
@@ -22,6 +24,15 @@ type PlexServicer interface {
 
 	// GetSectionIDsByNames retrieves section IDs that match the provided section names
 	GetSectionIDsByNames(ctx context.Context, sectionNames []string) ([]int, error)
+
+	// GetUsers retrieves all users associated with the Plex server
+	GetUsers(ctx context.Context) ([]models.PlexUser, error)
+
+	// UserHasServerAccess checks if a user is in the users list and has access to the server
+	UserHasServerAccess(ctx context.Context, userID int) (bool, error)
+
+	// GetUserDetails retrieves detailed information about the authenticated user
+	GetUserDetails(ctx context.Context, plexToken string) (*models.PlexDetailedUserResponse, error)
 }
 
 // Verify that PlexService implements the PlexServicer interface
@@ -41,52 +52,6 @@ func NewPlexService(client *http.Client) *PlexService {
 		token:    config.Config.GetString("plex.token"),
 		serverID: config.Config.GetString("plex.server_id"),
 	}
-}
-
-// PlexUser represents a user in the Plex system
-type PlexUser struct {
-	ID         int    `json:"id"`
-	UUID       string `json:"uuid"`
-	Email      string `json:"email"`
-	Username   string `json:"username"`
-	Title      string `json:"title"`
-	Thumb      string `json:"thumb"`
-	HomeSize   int    `json:"homeSize"`
-	AllowSync  bool   `json:"allowSync"`
-	AllowTuner int    `json:"allowTuners"`
-}
-
-// PlexFriendsResponse represents the response structure when fetching friends list
-type PlexFriendsResponse struct {
-	MediaContainer struct {
-		Size      int        `json:"size"`
-		Users     []PlexUser `json:"User"`
-		PublicKey string     `json:"publicKey"`
-	} `json:"MediaContainer"`
-}
-
-// PlexLibrarySection represents a library section in a Plex server
-type PlexLibrarySection struct {
-	ID    int    `json:"id"`
-	Key   int    `json:"key"`
-	Title string `json:"title"`
-	Type  string `json:"type"`
-}
-
-// PlexServerResponse represents the JSON response from the Plex server API
-type PlexServerResponse struct {
-	Name            string               `json:"name"`
-	MachineID       string               `json:"machineIdentifier"`
-	LibrarySections []PlexLibrarySection `json:"librarySections"`
-}
-
-// plexError represents a structured error response from Plex API
-type plexError struct {
-	Errors []struct {
-		Code    int    `json:"code"`
-		Message string `json:"message"`
-		Status  int    `json:"status"`
-	} `json:"errors"`
 }
 
 // UnshareLibrary removes a user's access to the Plex server
@@ -184,7 +149,7 @@ func (p *PlexService) ShareLibrary(ctx context.Context, email string) error {
 		return fmt.Errorf("invalid Plex token")
 	case http.StatusBadRequest:
 		// Try to parse structured error if available
-		var plexErr plexError
+		var plexErr models.PlexErrorResponse
 		if err := json.Unmarshal(body, &plexErr); err == nil && len(plexErr.Errors) > 0 {
 			return fmt.Errorf("bad request: %s", plexErr.Errors[0].Message)
 		}
@@ -196,6 +161,46 @@ func (p *PlexService) ShareLibrary(ctx context.Context, email string) error {
 			"email", email)
 		return fmt.Errorf("API returned unexpected status: %d %s", resp.StatusCode, resp.Status)
 	}
+}
+
+// GetUsers retrieves all users associated with the Plex server
+func (p *PlexService) GetUsers(ctx context.Context) ([]models.PlexUser, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://clients.plex.tv/api/users", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	p.setCommonHeaders(req)
+	// Override the Accept header to ensure we get XML response
+	req.Header.Set("Accept", "application/xml")
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request to get users failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Debug("Get users failed",
+			"status", resp.Status,
+			"response", string(body))
+		return nil, fmt.Errorf("API returned error status: %d %s", resp.StatusCode, resp.Status)
+	}
+
+	var usersResponse models.PlexUsersResponse
+	if err := xml.Unmarshal(body, &usersResponse); err != nil {
+		slog.Debug("Failed to unmarshal XML response",
+			"error", err,
+			"response_sample", string(body[:min(500, len(body))]))
+		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	return usersResponse.Users, nil
 }
 
 // GetSectionIDsByNames retrieves section IDs that match the provided section names
@@ -220,7 +225,7 @@ func (p *PlexService) GetSectionIDsByNames(ctx context.Context, sectionNames []s
 		return nil, fmt.Errorf("API returned error status: %d %s", resp.StatusCode, resp.Status)
 	}
 
-	var serverInfo PlexServerResponse
+	var serverInfo models.PlexServerResponse
 	if err := json.NewDecoder(resp.Body).Decode(&serverInfo); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON response: %w", err)
 	}
@@ -240,9 +245,73 @@ func (p *PlexService) GetSectionIDsByNames(ctx context.Context, sectionNames []s
 	return sectionIDs, nil
 }
 
+// UserHasServerAccess checks if a user is in the users list and has access to the server
+func (p *PlexService) UserHasServerAccess(ctx context.Context, userID int) (bool, error) {
+	users, err := p.GetUsers(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get users: %w", err)
+	}
+
+	serverID := p.serverID
+	for _, user := range users {
+		if user.ID == userID {
+			// Found the user, now check if they have access to our server
+			for _, server := range user.Servers {
+				if server.MachineIdentifier == serverID {
+					return true, nil
+				}
+			}
+			// User found but doesn't have access to our server
+			return false, nil
+		}
+	}
+
+	// User not found
+	return false, nil
+}
+
+// GetUserDetails retrieves detailed information about the authenticated user
+func (p *PlexService) GetUserDetails(ctx context.Context, plexToken string) (*models.PlexDetailedUserResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://plex.tv/api/v2/user", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user details request: %w", err)
+	}
+	p.setCommonHeaders(req)
+	req.Header.Set("X-Plex-Token", plexToken)
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("user details request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		slog.Debug("Get user details failed",
+			"status", resp.Status,
+			"response", string(body))
+		return nil, fmt.Errorf("API returned error status: %d %s", resp.StatusCode, resp.Status)
+	}
+
+	var userDetails models.PlexDetailedUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&userDetails); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON response: %w", err)
+	}
+
+	return &userDetails, nil
+}
+
 // setCommonHeaders sets the common headers used in Plex API requests
 func (p *PlexService) setCommonHeaders(req *http.Request) {
 	req.Header.Set("X-Plex-Token", p.token)
 	req.Header.Set("X-Plex-Client-Identifier", config.Config.GetString("plex.client_id"))
 	req.Header.Set("Accept", "application/json")
+}
+
+// Helper function to return the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

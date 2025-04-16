@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"plefi/config"
-	"plefi/model"
+	"plefi/models"
 	"strconv"
 
 	"github.com/gin-contrib/sessions"
@@ -71,7 +71,7 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 	}
 
 	// Parse user info
-	var userInfoData model.UserInfo
+	var userInfoData models.UserInfo
 	if userInfoString, ok := userInfo.(string); ok {
 		if err := json.Unmarshal([]byte(userInfoString), &userInfoData); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -144,7 +144,7 @@ type CancelSubscriptionRequest struct {
 // CancelUserSubscription cancels a specific subscription for the authenticated user
 func (s *V1) CancelUserSubscription(ctx *gin.Context) {
 	// Check for authentication
-	userInfo, err := model.GetUserInfo(ctx)
+	userInfo, err := models.GetUserInfo(ctx)
 	if err != nil || userInfo == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"status": "error",
@@ -348,8 +348,8 @@ func (s *V1) handleEntitlementRemoval(
 }
 
 // parseUserInfo parses user info from the session
-func parseUserInfo(userInfo interface{}) (*model.UserInfo, error) {
-	var userInfoData model.UserInfo
+func parseUserInfo(userInfo interface{}) (*models.UserInfo, error) {
+	var userInfoData models.UserInfo
 
 	if byteData, ok := userInfo.(string); ok {
 		if err := json.Unmarshal([]byte(byteData), &userInfoData); err != nil {

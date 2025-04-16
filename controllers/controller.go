@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"plefi/config"
-	"plefi/model"
+	"plefi/models"
 	"plefi/services"
 
 	"github.com/gin-contrib/sessions"
@@ -80,7 +80,7 @@ func (h AppController) Health(ctx *gin.Context) {
 func (a *AppController) Index(ctx *gin.Context) {
 	// Get the default price ID from configuration
 	priceID := config.Config.GetString("stripe.default_price_id")
-	userInfo, err := model.GetUserInfo(ctx)
+	userInfo, err := models.GetUserInfo(ctx)
 	if err != nil {
 		slog.Warn("Failed to parse user info", "error", err)
 	}

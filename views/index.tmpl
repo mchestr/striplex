@@ -1,378 +1,190 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PleFi</title>
-    <style>
-        :root {
-            --bg-color: #f7f7f9;
-            --container-bg: #ffffff;
-            --text-color: #2d3436;
-            --text-secondary: #636e72;
-            --shadow-color: rgba(0, 0, 0, 0.06);
-            --subtitle-bg: #f1f2f6;
-            --subtitle-color: #636e72;
-            --modal-overlay: rgba(0, 0, 0, 0.4);
-            --btn-secondary-bg: #e9ecef;
-            --btn-secondary-color: #495057;
-            --btn-secondary-hover: #dee2e6;
-            --logout-color: #868e96;
-            --logout-hover-color: #495057;
-            --logout-hover-bg: #f1f3f5;
-            --icon-color: #2d3436;
-        }
-
-        .dark-mode {
-            --bg-color: #1e272e;
-            --container-bg: #2d3436;
-            --text-color: #f1f2f6;
-            --text-secondary: #d1d8e0;
-            --shadow-color: rgba(0, 0, 0, 0.2);
-            --subtitle-bg: #485460;
-            --subtitle-color: #d2dae2;
-            --modal-overlay: rgba(0, 0, 0, 0.7);
-            --btn-secondary-bg: #485460;
-            --btn-secondary-color: #f1f2f6;
-            --btn-secondary-hover: #576574;
-            --logout-color: #a5b1c2;
-            --logout-hover-color: #d1d8e0;
-            --logout-hover-bg: #3d4852;
-            --icon-color: #ffffff;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            transition: background-color 0.3s ease;
-        }
-        .container {
-            text-align: center;
-            padding: 3rem;
-            border-radius: 12px;
-            background-color: var(--container-bg);
-            box-shadow: 0 8px 30px var(--shadow-color);
-            max-width: 800px;
-            width: 90%;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-            letter-spacing: -0.02em;
-            transition: color 0.3s ease;
-        }
-        p {
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            transition: color 0.3s ease;
-        }
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .logo {
-            max-width: 180px;
-        }
-        .subtitle {
-            display: inline-block;
-            padding: 0.5rem 1.5rem;
-            background-color: var(--subtitle-bg);
-            border-radius: 50px;
-            color: var(--subtitle-color);
-            font-weight: 600;
-            margin-bottom: 2.5rem;
-            font-size: 0.95rem;
-            letter-spacing: 0.02em;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        .checkout-btn {
-            background-color: #4b6bfb;
-            color: #ffffff;
-            border: none;
-            padding: 0.9rem 2rem;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(75, 107, 251, 0.15);
-            margin-right: 1rem;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .checkout-btn:hover {
-            background-color: #3557fa;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(75, 107, 251, 0.25);
-        }
-        .logout-btn {
-            background-color: transparent;
-            color: var(--logout-color);
-            border: none;
-            padding: 0.5rem 0.75rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: 2rem;
-            text-decoration: underline;
-        }
-        .logout-btn:hover {
-            color: var(--logout-hover-color);
-            background-color: var(--logout-hover-bg);
-        }
-        .cancel-btn {
-            background-color: #ff7675;
-            color: #ffffff;
-            border: none;
-            padding: 0.8rem 1.8rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(255, 118, 117, 0.15);
-            margin-top: 1rem;
-        }
-        .cancel-btn:hover {
-            background-color: #ff6b6b;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(255, 118, 117, 0.25);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: var(--modal-overlay);
-            backdrop-filter: blur(4px);
-            transition: background-color 0.3s ease;
-        }
-        .modal-content {
-            background-color: var(--container-bg);
-            margin: 15% auto;
-            padding: 2.5rem;
-            border-radius: 12px;
-            width: 80%;
-            max-width: 480px;
-            box-shadow: 0 20px 40px var(--shadow-color);
-            text-align: center;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .modal-content h2 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-            transition: color 0.3s ease;
-        }
-        .modal-content p {
-            color: var(--text-secondary);
-            margin-bottom: 0.75rem;
-            transition: color 0.3s ease;
-        }
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        .confirm-btn {
-            background-color: #ff7675;
-            color: #ffffff;
-            border: none;
-            padding: 0.8rem 1.8rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .confirm-btn:hover {
-            background-color: #ff6b6b;
-        }
-        .cancel-modal-btn {
-            background-color: var(--btn-secondary-bg);
-            color: var(--btn-secondary-color);
-            border: none;
-            padding: 0.8rem 1.8rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease;
-        }
-        .cancel-modal-btn:hover {
-            background-color: var(--btn-secondary-hover);
-        }
-        .status-message {
-            margin-top: 1.5rem;
-            padding: 0.75rem 1.25rem;
-            border-radius: 8px;
-            display: none;
-            font-weight: 500;
-        }
-        .success {
-            background-color: #e3f9e5;
-            color: #2b8a3e;
-        }
-        .error {
-            background-color: #fff5f5;
-            color: #e03131;
-        }
-        .button-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .greeting {
-            margin-bottom: 2rem;
-        }
-        .theme-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background-color 0.2s ease;
-            color: var(--icon-color);
-        }
-        .theme-toggle:hover {
-            background-color: rgba(0, 0, 0, 0.1);
-        }
-        .dark-mode .theme-toggle:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        .theme-icon {
-            width: 24px;
-            height: 24px;
-        }
-        .donate-btn {
-            background-color: #ffb26b;
-            color: #7d5a50;
-            border: none;
-            padding: 0.9rem 2rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(255, 178, 107, 0.25);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 1rem;
-        }
-        .donate-btn:hover {
-            background-color: #ffc988;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(255, 178, 107, 0.35);
-        }
-        @media (max-width: 640px) {
-            .container {
-                padding: 2rem;
-                width: 85%;
-            }
-            h1 {
-                font-size: 2.5rem;
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+                    },
+                    colors: {
+                        primary: {
+                            DEFAULT: '#4b6bfb',
+                            hover: '#3557fa',
+                            light: '#e6ebfe'
+                        },
+                        secondary: {
+                            DEFAULT: '#e9ecef',
+                            hover: '#dee2e6'
+                        },
+                        cancel: {
+                            DEFAULT: '#ff7675',
+                            hover: '#ff6b6b'
+                        },
+                        donate: {
+                            DEFAULT: '#ffb26b',
+                            hover: '#ffc988',
+                            text: '#7d5a50'
+                        }
+                    }
+                }
             }
         }
-    </style>
+    </script>
 </head>
-<body>
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
-        <svg id="moonIcon" class="theme-icon" viewBox="0 0 24 24" style="display:none">
-            <path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
-        </svg>
-        <svg id="sunIcon" class="theme-icon" viewBox="0 0 24 24" style="display:none">
-            <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
-        </svg>
-    </button>
-    <div class="container">
+<body class="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen overflow-x-hidden">
+    <div class="bg-[#2d3436] shadow-lg shadow-black/20 p-8 md:p-12 rounded-xl text-center max-w-3xl w-[90%]">
         {{ if .IsAuthenticated }}
-            <div class="greeting">
-                <h1>Hello, {{ .UserInfo.Username }}!</h1>
+            <div class="mb-8">
+                <h1 class="text-4xl md:text-[3.5rem] font-extrabold mb-4 tracking-tight text-[#f1f2f6] leading-tight">Hello, {{ .UserInfo.Username }}!</h1>
             </div>
         {{ else }}
-            <h1>PleFi</h1>
-            <div class="subtitle">Plex seamless subscription management</div>
+            <h1 class="text-4xl md:text-[3.5rem] font-extrabold mb-4 tracking-tight text-[#f1f2f6] leading-tight">PleFi</h1>
+            <div class="inline-block px-6 py-2 bg-[#485460] text-[#d2dae2] rounded-full font-semibold mb-10 text-sm tracking-wide">Plex seamless subscription management</div>
+            
+            <!-- Buy Me a Coffee section moved above subscription details -->
+            <div class="my-8 py-6 px-4 rounded-lg bg-[#303842] w-full max-w-md mx-auto">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-white">Enjoying PleFi?</h3>
+                    <p class="mt-2 text-gray-300">Consider buying me a coffee to support my work!</p>
+                    <div class="mt-4">
+                        <a href="/stripe/donation-checkout" class="inline-block hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200">
+                            <img class="h-12" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Collapsible Pricing Card -->
+            <div class="my-8 max-w-3xl mx-auto">
+                <button id="pricingToggle" class="flex items-center justify-center gap-2 w-full text-center py-3 px-6 bg-[#3a4d7c] rounded-lg text-white font-semibold hover:bg-[#465d94] transition-colors">
+                    <span>Expand for subscription options</span>
+                    <svg id="expandIcon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                
+                <div id="pricingDetails" class="hidden mt-4 rounded-lg shadow-lg overflow-hidden lg:flex">
+                    <div class="flex-1 px-6 py-8 lg:p-10 bg-[#3a4d7c]">
+                        <h3 class="text-2xl font-extrabold text-white sm:text-3xl">Plex Premium Access</h3>
+                        <p class="mt-4 text-base text-gray-200">
+                            Enhance your Plex experience with premium features and seamless management!
+                        </p>
+                        <div class="mt-6">
+                            <div class="flex items-center">
+                                <div class="flex-1 border-t-2 border-gray-600"></div>
+                            </div>
+                            <ul role="list" class="mt-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-6 lg:gap-y-4">
+                                <li class="flex items-start lg:col-span-1">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="ml-3 text-white">Ad-free streaming experience</p>
+                                </li>
+                                <li class="flex items-start lg:col-span-1">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="ml-3 text-white">Advanced content management</p>
+                                </li>
+                                <li class="flex items-start lg:col-span-1">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="ml-3 text-white">Priority customer support</p>
+                                </li>
+                                <li class="flex items-start lg:col-span-1">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="ml-3 text-white">Regular feature updates</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="py-8 px-6 text-center lg:flex-shrink-0 lg:flex lg:flex-col lg:justify-center lg:p-10 bg-[#2c3e63]">
+                        <p class="text-lg leading-6 font-medium text-white">Monthly subscription</p>
+                        <div class="mt-4 flex items-center justify-center text-5xl font-extrabold text-white">
+                            <span>$4.99</span>
+                            <span class="ml-3 text-xl font-medium text-gray-50">/month</span>
+                        </div>
+                        <div class="mt-6">
+                            <div class="rounded-md shadow">
+                                <button onclick="window.location.href='/stripe/checkout?price_id={{ .PriceID }}'" class="w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                                    Subscribe Now
+                                </button>
+                            </div>
+                            <p class="text-gray-300 text-sm mt-3">Cancel anytime, no lock-in</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         {{ end }}
-        <div class="button-container">
+
+        <div class="flex flex-col items-center gap-3">
             {{ if .IsAuthenticated }}
-                <a href="/subscriptions" class="checkout-btn">Manage Subscriptions</a>
-                <a href="/stripe/donation-checkout" class="donate-btn">☕ Buy me a coffee</a>
-            {{ else }}
-                <button class="checkout-btn" onclick="window.location.href='/stripe/checkout?price_id={{ .PriceID }}'">Subscribe to Get Instant Access</button>
-                <a href="/stripe/donation-checkout" class="donate-btn">☕ Buy me a coffee</a>
+                <a href="/subscriptions" class="inline-block w-auto bg-[#4b6bfb] hover:bg-[#3557fa] text-white font-bold py-3.5 px-8 rounded-lg shadow-[0_4px_12px_rgba(75,107,251,0.15)] hover:shadow-[0_6px_16px_rgba(75,107,251,0.25)] transform hover:-translate-y-0.5 transition-all duration-200 text-lg">Manage Subscriptions</a>
+                
+                <!-- Updated Buy Me a Coffee section -->
+                <div class="mt-8 py-6 px-4 rounded-lg bg-[#303842] w-full max-w-md">
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-white">Enjoying PleFi?</h3>
+                        <p class="mt-2 text-gray-300">Consider buying me a coffee to support my work!</p>
+                        <div class="mt-4">
+                            <a href="/stripe/donation-checkout" class="inline-block hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200">
+                                <img class="h-12" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee">
+                            </a>
+                        </div>
+                    </div>
+                </div>
             {{ end }}
         </div>
+        
         {{ if .IsAuthenticated }}
-        <button id="logoutButton" class="logout-btn">Sign out</button>
+        <button id="logoutButton" class="mt-8 text-[#a5b1c2] hover:text-[#d1d8e0] hover:bg-[#3d4852] py-2 px-3 rounded text-sm font-medium underline transition-colors duration-200">Sign out</button>
         {{ end }}
     </div>
+    
+    <div id="statusMessage" class="mt-6 px-5 py-3 rounded-lg hidden font-medium"></div>
+    
     <script>
         // Get modal elements
         const statusMessage = document.getElementById('statusMessage');
         const logoutButton = document.getElementById('logoutButton');
-        // Theme toggle elements
-        const themeToggle = document.getElementById('themeToggle');
-        const moonIcon = document.getElementById('moonIcon');
-        const sunIcon = document.getElementById('sunIcon');
-        // Check for saved theme preference or use preferred color scheme
-        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark' || (!savedTheme && prefersDarkMode)) {
-            document.body.classList.add('dark-mode');
-            moonIcon.style.display = 'none';
-            sunIcon.style.display = 'block';
-        } else {
-            document.body.classList.remove('dark-mode');
-            moonIcon.style.display = 'block';
-            sunIcon.style.display = 'none';
+        
+        // Pricing toggle functionality
+        const pricingToggle = document.getElementById('pricingToggle');
+        const pricingDetails = document.getElementById('pricingDetails');
+        const expandIcon = document.getElementById('expandIcon');
+        
+        if (pricingToggle) {
+            pricingToggle.addEventListener('click', function() {
+                pricingDetails.classList.toggle('hidden');
+                if (!pricingDetails.classList.contains('hidden')) {
+                    expandIcon.classList.add('rotate-180');
+                    pricingToggle.querySelector('span').textContent = 'Hide subscription options';
+                } else {
+                    expandIcon.classList.remove('rotate-180');
+                    pricingToggle.querySelector('span').textContent = 'Expand for subscription options';
+                }
+            });
         }
-        // Theme toggle functionality
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            if (document.body.classList.contains('dark-mode')) {
-                localStorage.setItem('theme', 'dark');
-                moonIcon.style.display = 'none';
-                sunIcon.style.display = 'block';
-            } else {
-                localStorage.setItem('theme', 'light');
-                moonIcon.style.display = 'block';
-                sunIcon.style.display = 'none';
-            }
-        });
+        
         // Handle logout via JavaScript
         if (logoutButton) {
             logoutButton.addEventListener('click', async function() {

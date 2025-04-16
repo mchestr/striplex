@@ -12,7 +12,7 @@ import (
 )
 
 // NewRouter sets up and configures the application router with all routes.
-func NewRouter(client *http.Client) *gin.Engine {
+func NewRouter(svcs *services.Services, client *http.Client) *gin.Engine {
 	// Initialize router
 	router := gin.Default()
 
@@ -28,7 +28,7 @@ func NewRouter(client *http.Client) *gin.Engine {
 	router.Use(sessions.Sessions("session_store", store))
 
 	// Initialize controllers
-	appController := controllers.NewAppController(client, services.NewServices(client))
+	appController := controllers.NewAppController(client, svcs)
 	appController.GetRoutes(&router.RouterGroup)
 
 	return router

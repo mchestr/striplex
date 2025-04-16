@@ -28,4 +28,9 @@ func (v *V1) GetRoutes(r *gin.RouterGroup) {
 		stripe.GET("/subscriptions", v.GetSubscriptions)
 		stripe.POST("/cancel-subscription", v.CancelUserSubscription)
 	}
+
+	plex := r.Group("/plex")
+	{
+		plex.GET("/check-access", v.CheckServerAccess)
+	}
 }

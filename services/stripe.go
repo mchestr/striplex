@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"plefi/config"
-	"plefi/model"
+	"plefi/models"
 	"strconv"
 
 	"github.com/stripe/stripe-go/v82"
@@ -18,25 +18,25 @@ import (
 // StripeServicer defines the interface for Stripe payment operations
 type StripeServicer interface {
 	// GetCustomer retrieves an existing Stripe customer by Plex user ID
-	GetCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error)
+	GetCustomer(ctx context.Context, user *models.UserInfo) (*stripe.Customer, error)
 
 	// GetOrCreateCustomer retrieves a customer or creates one if it doesn't exist
-	GetOrCreateCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error)
+	GetOrCreateCustomer(ctx context.Context, user *models.UserInfo) (*stripe.Customer, error)
 
 	// CreateCustomer creates a new Stripe customer from Plex user info
-	CreateCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error)
+	CreateCustomer(ctx context.Context, user *models.UserInfo) (*stripe.Customer, error)
 
 	// CreateAnonymousCustomer creates a customer for anonymous donations
 	CreateAnonymousCustomer(ctx context.Context) (*stripe.Customer, error)
 
 	// CreateSubscriptionCheckoutSession creates a checkout session for subscription purchase
-	CreateSubscriptionCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error)
+	CreateSubscriptionCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *models.UserInfo) (*stripe.CheckoutSession, error)
 
 	// CreateOneTimeCheckoutSession creates a checkout session for one-time payment
-	CreateOneTimeCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error)
+	CreateOneTimeCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *models.UserInfo) (*stripe.CheckoutSession, error)
 
 	// GetSubscription retrieves a subscription and verifies it belongs to the user
-	GetSubscription(ctx context.Context, userInfo *model.UserInfo, subscriptionID string) (*stripe.Subscription, error)
+	GetSubscription(ctx context.Context, userInfo *models.UserInfo, subscriptionID string) (*stripe.Subscription, error)
 
 	// CancelAtEndSubscription cancels a subscription at the end of the current period
 	CancelAtEndSubscription(ctx context.Context, subscriptionID string) (*stripe.Subscription, error)
@@ -55,7 +55,7 @@ func NewStripeService(client *http.Client) *StripeService {
 	}
 }
 
-func (s *StripeService) GetCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error) {
+func (s *StripeService) GetCustomer(ctx context.Context, user *models.UserInfo) (*stripe.Customer, error) {
 	slog.Info("Searching for Stripe customer",
 		"plex_id", user.ID,
 		"email", user.Email,
@@ -77,7 +77,7 @@ func (s *StripeService) GetCustomer(ctx context.Context, user *model.UserInfo) (
 	return customerIter.Customer(), nil
 }
 
-func (s *StripeService) GetOrCreateCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error) {
+func (s *StripeService) GetOrCreateCustomer(ctx context.Context, user *models.UserInfo) (*stripe.Customer, error) {
 	customer, err := s.GetCustomer(ctx, user)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (s *StripeService) GetOrCreateCustomer(ctx context.Context, user *model.Use
 	return customer, nil
 }
 
-func (s *StripeService) CreateCustomer(ctx context.Context, user *model.UserInfo) (*stripe.Customer, error) {
+func (s *StripeService) CreateCustomer(ctx context.Context, user *models.UserInfo) (*stripe.Customer, error) {
 	slog.Info("Creating a new Stripe customer",
 		"plex_id", user.ID,
 		"email", user.Email,
@@ -122,7 +122,7 @@ func (s *StripeService) CreateAnonymousCustomer(ctx context.Context) (*stripe.Cu
 	})
 }
 
-func (s *StripeService) CreateSubscriptionCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error) {
+func (s *StripeService) CreateSubscriptionCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *models.UserInfo) (*stripe.CheckoutSession, error) {
 	slog.Info("Creating a new Stripe subscription checkout session",
 		"plex_id", user.ID,
 		"email", user.Email,
@@ -151,7 +151,7 @@ func (s *StripeService) CreateSubscriptionCheckoutSession(ctx context.Context, s
 	})
 }
 
-func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *model.UserInfo) (*stripe.CheckoutSession, error) {
+func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCustomer *stripe.Customer, user *models.UserInfo) (*stripe.CheckoutSession, error) {
 	// Log with user info if available
 	if user != nil {
 		slog.Info("Creating a new Stripe donation checkout session",
@@ -186,7 +186,7 @@ func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCusto
 	})
 }
 
-func (s *StripeService) GetSubscription(ctx context.Context, userInfo *model.UserInfo, subscriptionID string) (*stripe.Subscription, error) {
+func (s *StripeService) GetSubscription(ctx context.Context, userInfo *models.UserInfo, subscriptionID string) (*stripe.Subscription, error) {
 	customer, err := s.GetCustomer(ctx, userInfo)
 	if err != nil {
 		return nil, err

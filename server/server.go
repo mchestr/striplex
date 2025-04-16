@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"plefi/config"
+	"plefi/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,8 +16,8 @@ type Server struct {
 }
 
 // Init initializes the server without starting it
-func Init(client *http.Client) (*Server, error) {
-	r := NewRouter(client)
+func Init(svcs *services.Services, client *http.Client) (*Server, error) {
+	r := NewRouter(svcs, client)
 	r.SetTrustedProxies(config.Config.GetStringSlice("server.trusted_proxies"))
 
 	srv := &Server{

@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"plefi/config"
-	"plefi/model"
+	"plefi/models"
 	"plefi/services"
 	"time"
 
@@ -336,7 +336,7 @@ func validateSessionState(session sessions.Session, returnedState string) (*Plex
 
 // saveUserSession saves the user information to the session
 func saveUserSession(session sessions.Session, userInfo *PlexUserResponse) error {
-	userInfoData := model.UserInfo{
+	userInfoData := models.UserInfo{
 		ID:       userInfo.ID,
 		UUID:     userInfo.UUID,
 		Username: userInfo.Username,

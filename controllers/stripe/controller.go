@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"plefi/config"
-	"plefi/model"
+	"plefi/models"
 	"plefi/services"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +40,7 @@ func (s *StripeController) GetRoutes(r *gin.RouterGroup) {
 // CreateCheckoutSession creates a Stripe checkout session for subscription and redirects the user.
 func (s *StripeController) CreateCheckoutSession(ctx *gin.Context) {
 	// Check for Plex authentication in session
-	userInfo, err := model.GetUserInfo(ctx)
+	userInfo, err := models.GetUserInfo(ctx)
 	if err != nil {
 		slog.Error("Failed to parse user info", "error", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid session data"})
@@ -74,12 +74,12 @@ func (s *StripeController) CreateCheckoutSession(ctx *gin.Context) {
 
 // CreateDonationCheckoutSession creates a Stripe checkout session for donation without requiring authentication
 func (s *StripeController) CreateDonationCheckoutSession(ctx *gin.Context) {
-	var userInfo *model.UserInfo
+	var userInfo *models.UserInfo
 	var customer *stripe.Customer
 	var err error
 
 	// Try to get user info if available, but don't require it
-	userInfo, _ = model.GetUserInfo(ctx)
+	userInfo, _ = models.GetUserInfo(ctx)
 
 	// If we have user info, get or create customer
 	if userInfo != nil {
@@ -112,7 +112,7 @@ func (s *StripeController) CreateDonationCheckoutSession(ctx *gin.Context) {
 
 // SuccessSubscription handles successful Stripe checkout
 func (s *StripeController) SuccessSubscription(ctx *gin.Context) {
-	userInfo, err := model.GetUserInfo(ctx)
+	userInfo, err := models.GetUserInfo(ctx)
 	if err != nil || userInfo == nil {
 		slog.Error("Failed to parse user info", "error", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "invalid session data"})
@@ -127,7 +127,7 @@ func (s *StripeController) SuccessSubscription(ctx *gin.Context) {
 
 // DonationSuccess handles successful donation payments
 func (s *StripeController) DonationSuccess(ctx *gin.Context) {
-	userInfo, err := model.GetUserInfo(ctx)
+	userInfo, err := models.GetUserInfo(ctx)
 	if err != nil {
 		slog.Warn("Failed to parse user info", "error", err)
 		// Continue anyway, as donation can be anonymous

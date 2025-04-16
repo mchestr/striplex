@@ -10,11 +10,13 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"plefi/config"
 	"plefi/server"
+	"plefi/services"
 
 	"github.com/stripe/stripe-go/v82"
 )
@@ -58,6 +60,18 @@ func initApp(environment string) (*server.Server, error) {
 		}
 	}
 
+	svcs := services.NewServices(httpClient)
+	if config.Config.GetString("plex.admin_user_id") == "" {
+		plexUser, err := svcs.Plex.GetUserDetails(context.Background(), config.Config.GetString("plex.token"))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Plex admin user details: %w", err)
+		}
+		config.Config.Set("plex.admin_user_id", strconv.Itoa(plexUser.ID))
+		slog.Info("Plex admin user ID set in config",
+			"plex_admin_user_id", config.Config.GetString("plex.admin_user_id"),
+			"plex_username", plexUser.Username)
+	}
+
 	// Set Stripe API key
 	stripe.Key = config.Config.GetString("stripe.secret_key")
 	if stripe.Key == "" {
@@ -66,7 +80,7 @@ func initApp(environment string) (*server.Server, error) {
 	stripe.SetHTTPClient(httpClient)
 
 	// Initialize server components
-	srv, err := server.Init(httpClient)
+	srv, err := server.Init(svcs, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("server initialization error: %w", err)
 	}
