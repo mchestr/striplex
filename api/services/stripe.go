@@ -131,7 +131,7 @@ func (s *StripeService) CreateSubscriptionCheckoutSession(ctx context.Context, s
 	priceID := config.Config.GetString("stripe.default_price_id")
 	hostname := config.Config.GetString("server.hostname")
 	successURL := fmt.Sprintf("https://%s/stripe/success", hostname)
-	cancelURL := fmt.Sprintf("https://%s/stripe/cancel?price_id=%s", hostname, priceID)
+	cancelURL := fmt.Sprintf("https://%s/stripe/cancel", hostname)
 	// Create a Stripe checkout session for the customer
 	return session.New(&stripe.CheckoutSessionParams{
 		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),

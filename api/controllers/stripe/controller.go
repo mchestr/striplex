@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"plefi/api/config"
 	"plefi/api/models"
 	"plefi/api/services"
 
@@ -105,46 +104,4 @@ func (s *StripeController) CreateDonationCheckoutSession(ctx *gin.Context) {
 
 	// Redirect to Stripe Checkout
 	ctx.Redirect(http.StatusTemporaryRedirect, sess.URL)
-}
-
-// SuccessSubscription handles successful Stripe checkout
-func (s *StripeController) SuccessSubscription(ctx *gin.Context) {
-	userInfo, err := models.GetUserInfo(ctx)
-	if err != nil || userInfo == nil {
-		slog.Error("Failed to parse user info", "error", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "invalid session data"})
-		return
-	}
-
-	// Render the template with data
-	ctx.HTML(http.StatusOK, "stripe_success.tmpl", gin.H{
-		"UserInfo": userInfo,
-	})
-}
-
-// DonationSuccess handles successful donation payments
-func (s *StripeController) DonationSuccess(ctx *gin.Context) {
-	userInfo, err := models.GetUserInfo(ctx)
-	if err != nil {
-		slog.Warn("Failed to parse user info", "error", err)
-		// Continue anyway, as donation can be anonymous
-	}
-
-	// Render the template with data
-	ctx.HTML(http.StatusOK, "stripe_donation_success.tmpl", gin.H{
-		"UserInfo": userInfo,
-	})
-}
-
-// CancelSubscription handles cancelled Stripe checkout
-func (s *StripeController) CancelSubscription(ctx *gin.Context) {
-	priceID := ctx.Query("price_id")
-	if priceID == "" {
-		priceID = config.Config.GetString("stripe.default_price_id")
-	}
-
-	// Render the cancel template with data
-	ctx.HTML(http.StatusOK, "stripe_cancel.tmpl", gin.H{
-		"PriceID": priceID,
-	})
 }
