@@ -18,6 +18,13 @@ func NewRouter(svcs *services.Services, client *http.Client) *gin.Engine {
 
 	// Set up HTML rendering
 	router.LoadHTMLGlob("api/views/*")
+	router.Static("/static", "./frontend/build/static")
+	router.Static("/assets", "./frontend/build/assets")
+	router.StaticFile("/favicon.ico", "./frontend/build/favicon.ico")
+	router.StaticFile("/manifest.json", "./frontend/build/manifest.json")
+	router.NoRoute(func(c *gin.Context) {
+		c.File("./frontend/build/index.html")
+	})
 
 	// Set Gin mode based on configuration
 	gin.SetMode(config.Config.GetString("server.mode"))

@@ -1,11 +1,11 @@
 module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
+  content: [
+    './src/**/*.{js,jsx,ts,tsx}',
+    './public/index.html'
+  ],
   darkMode: 'class',
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
-      },
       colors: {
         primary: {
           DEFAULT: '#4b6bfb',
@@ -25,8 +25,11 @@ module.exports = {
           hover: '#ffc988',
           text: '#7d5a50'
         }
-      }
-    }
+      },
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+      },
+    },
   },
   plugins: [],
 }

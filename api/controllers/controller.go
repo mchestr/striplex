@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"plefi/api/models"
 	"plefi/api/services"
 
 	"github.com/gin-contrib/sessions"
@@ -29,9 +28,6 @@ func (c *AppController) GetRoutes(r *gin.RouterGroup) {
 	// Load templates
 	r.GET("/health", c.Health)
 	r.GET("/logout", c.Logout)
-	r.GET("/", c.Index)
-	r.GET("/subscriptions", c.Subscriptions)
-	r.GET("/login", c.Login)
 
 	api := r.Group("/api")
 	{
@@ -73,29 +69,6 @@ func (p AppController) Logout(c *gin.Context) {
 
 func (h AppController) Health(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
-}
-
-// Login renders the login page for unauthenticated users
-func (a *AppController) Login(ctx *gin.Context) {
-	userInfo, _ := models.GetUserInfo(ctx)
-
-	// If user is already authenticated, redirect to home page
-	if userInfo != nil {
-		ctx.Redirect(http.StatusFound, "/")
-		return
-	}
-
-	// Render the login template
-	ctx.HTML(http.StatusOK, "login.tmpl", gin.H{
-		"IsAuthenticated": false,
-	})
-}
-
-// Index serves the React frontend's index.html for the Single Page Application
-func (a *AppController) Index(ctx *gin.Context) {
-	// For Single Page Applications, we need to serve the index.html file
-	// for all routes that don't match static assets
-	ctx.File("./frontend/build/index.html")
 }
 
 // Subscriptions displays the subscriptions management page
