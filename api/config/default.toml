@@ -3,3 +3,6 @@ client_id = "plefi"
 
 [proxy]
 enabled = false
+
+[server]
+static_path = "./frontend/build"

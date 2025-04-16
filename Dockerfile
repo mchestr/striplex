@@ -1,5 +1,14 @@
-# Dockerfile.distroless
-FROM golang:1.24-bookworm AS base
+# Multi-stage build for both frontend and backend
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+FROM golang:1.24-bookworm AS backend-builder
 
 WORKDIR $GOPATH/src/smallest-golang/app/
 
@@ -14,10 +23,12 @@ FROM gcr.io/distroless/static-debian11
 
 # Set multiple environment variables in a single layer
 ENV GIN_MODE=release \
-    PLEFI_SERVER__ADDRESS=0.0.0.0:8080
+    PLEFI_SERVER__ADDRESS=0.0.0.0:8080 \
+    PLEFI_SERVER__STATIC_PATH=/static
 
-COPY --from=base /main .
-# Add the views directory to the container
-COPY --from=base /go/src/smallest-golang/app/views /views
+COPY --from=backend-builder /main .
+
+# Copy the built frontend assets to the static directory
+COPY --from=frontend-builder /app/frontend/build /static
 
 CMD ["./main"]

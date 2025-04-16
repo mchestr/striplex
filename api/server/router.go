@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
 	"plefi/api/config"
 	"plefi/api/controllers"
@@ -16,14 +18,14 @@ func NewRouter(svcs *services.Services, client *http.Client) *gin.Engine {
 	// Initialize router
 	router := gin.Default()
 
-	// Set up HTML rendering
-	router.LoadHTMLGlob("api/views/*")
-	router.Static("/static", "./frontend/build/static")
-	router.Static("/assets", "./frontend/build/assets")
-	router.StaticFile("/favicon.ico", "./frontend/build/favicon.ico")
-	router.StaticFile("/manifest.json", "./frontend/build/manifest.json")
+	staticPath := config.Config.GetString("server.static_path")
+	slog.Info("static path", "path", staticPath)
+	router.Static("/static", fmt.Sprintf("%s/static", staticPath))
+	router.Static("/assets", fmt.Sprintf("%s/assets", staticPath))
+	router.StaticFile("/favicon.ico", fmt.Sprintf("%s/favicon.ico", staticPath))
+	router.StaticFile("/manifest.json", fmt.Sprintf("%s/manifest.json", staticPath))
 	router.NoRoute(func(c *gin.Context) {
-		c.File("./frontend/build/index.html")
+		c.File(fmt.Sprintf("%s/index.html", staticPath))
 	})
 
 	// Set Gin mode based on configuration

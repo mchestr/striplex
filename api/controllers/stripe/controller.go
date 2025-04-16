@@ -32,9 +32,6 @@ func NewStripeController(basePath string, client *http.Client, services *service
 func (s *StripeController) GetRoutes(r *gin.RouterGroup) {
 	r.GET("/checkout", s.CreateCheckoutSession)
 	r.GET("/donation-checkout", s.CreateDonationCheckoutSession)
-	r.GET("/success", s.SuccessSubscription)
-	r.GET("/donation-success", s.DonationSuccess)
-	r.GET("/cancel", s.CancelSubscription)
 }
 
 // CreateCheckoutSession creates a Stripe checkout session for subscription and redirects the user.
