@@ -95,17 +95,25 @@ function HomePage() {
             : "You do not have access to Plex content."}
         </p>
         
-        {/* Only show the subscriptions button if user has subscriptions */}
-        {hasSubscriptions && (
-          <div className="space-y-4 mb-6">
+        <div className="space-y-4 mb-6">
+          {hasSubscriptions ? (
+            // Show subscription management button for users with subscriptions
             <button
               onClick={() => navigate('/subscriptions')}
               className="w-full flex items-center justify-center bg-[#2c3e50] hover:bg-[#34495e] text-[#f1f2f6] font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
             >
               Manage Subscriptions
             </button>
-          </div>
-        )}
+          ) : !hasPlexAccess ? (
+            // Show subscribe button for users without subscriptions and without Plex access
+            <button
+              onClick={() => window.location.href = '/stripe/checkout'}
+              className="w-full flex items-center justify-center bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold py-3.5 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 text-lg"
+            >
+              Subscribe Now
+            </button>
+          ) : null}
+        </div>
         
         {/* Sign out link */}
         <div className="mt-8">
