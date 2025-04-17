@@ -18,7 +18,7 @@ func NewRouter(svcs *services.Services, client *http.Client) *gin.Engine {
 	// Initialize router
 	router := gin.Default()
 
-	staticPath := config.Config.GetString("server.static_path")
+	staticPath := config.C.Server.StaticPath
 	slog.Info("static path", "path", staticPath)
 	router.Static("/static", fmt.Sprintf("%s/static", staticPath))
 	router.Static("/assets", fmt.Sprintf("%s/assets", staticPath))
@@ -29,10 +29,10 @@ func NewRouter(svcs *services.Services, client *http.Client) *gin.Engine {
 	})
 
 	// Set Gin mode based on configuration
-	gin.SetMode(config.Config.GetString("server.mode"))
+	gin.SetMode(config.C.Server.Mode)
 
 	// Initialize session store
-	sessionSecret := []byte(config.Config.GetString("server.session_secret"))
+	sessionSecret := []byte(config.C.Auth.SessionSecret)
 	store := cookie.NewStore(sessionSecret)
 	router.Use(sessions.Sessions("session_store", store))
 

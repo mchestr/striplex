@@ -18,12 +18,12 @@ type Server struct {
 // Init initializes the server without starting it
 func Init(svcs *services.Services, client *http.Client) (*Server, error) {
 	r := NewRouter(svcs, client)
-	r.SetTrustedProxies(config.Config.GetStringSlice("server.trusted_proxies"))
+	r.SetTrustedProxies(config.C.Server.TrustedProxies)
 
 	srv := &Server{
 		router: r,
 		server: &http.Server{
-			Addr:    config.Config.GetString("server.address"),
+			Addr:    config.C.Server.Address,
 			Handler: r,
 		},
 	}

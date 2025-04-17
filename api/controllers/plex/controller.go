@@ -172,8 +172,8 @@ func (p *PlexController) generatePlexPin(ctx context.Context) (*PlexPinResponse,
 	// Create form data matching the Plex API requirements
 	formData := url.Values{}
 	formData.Set("strong", "true")
-	formData.Set("X-Plex-Product", config.Config.GetString("plex.product"))
-	formData.Set("X-Plex-Client-Identifier", config.Config.GetString("plex.client_id"))
+	formData.Set("X-Plex-Product", config.C.Plex.ProductName)
+	formData.Set("X-Plex-Client-Identifier", config.C.Plex.ClientID)
 
 	// Create the request with form data
 	req, err := http.NewRequestWithContext(
@@ -219,7 +219,7 @@ func (p *PlexController) checkPlexPin(ctx context.Context, pinID int) (*PlexPinR
 
 	// Create form data
 	formData := url.Values{}
-	formData.Set("X-Plex-Client-Identifier", config.Config.GetString("plex.client_id"))
+	formData.Set("X-Plex-Client-Identifier", config.C.Plex.ClientID)
 
 	// Create the request with context
 	req, err := http.NewRequestWithContext(
@@ -234,7 +234,7 @@ func (p *PlexController) checkPlexPin(ctx context.Context, pinID int) (*PlexPinR
 
 	// Set required headers
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Plex-Client-Identifier", config.Config.GetString("plex.client_id"))
+	req.Header.Set("X-Plex-Client-Identifier", config.C.Plex.ClientID)
 
 	// Execute the request
 	resp, err := p.client.Do(req)
@@ -272,8 +272,8 @@ func (p *PlexController) getPlexUserInfo(ctx context.Context, token string) (*Pl
 
 	// Set required headers
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Plex-Product", config.Config.GetString("plex.product"))
-	req.Header.Set("X-Plex-Client-Identifier", config.Config.GetString("plex.client_id"))
+	req.Header.Set("X-Plex-Product", config.C.Plex.ProductName)
+	req.Header.Set("X-Plex-Client-Identifier", config.C.Plex.ClientID)
 	req.Header.Set("X-Plex-Token", token)
 
 	// Execute the request
@@ -305,11 +305,11 @@ func (p *PlexController) getPlexUserInfo(ctx context.Context, token string) (*Pl
 func buildPlexAuthURL(basePath, state, nextURL, code string) string {
 	baseURL := "https://app.plex.tv/auth#"
 	params := url.Values{}
-	params.Add("clientID", config.Config.GetString("plex.client_id"))
+	params.Add("clientID", config.C.Plex.ClientID)
 	params.Add("forwardUrl", fmt.Sprintf("https://%s%s/callback?state=%s&next=%s",
-		config.Config.GetString("server.hostname"), basePath, state, nextURL))
+		config.C.Server.Hostname, basePath, state, nextURL))
 	params.Add("code", code)
-	params.Add("context[device][product]", config.Config.GetString("plex.product"))
+	params.Add("context[device][product]", config.C.Plex.ProductName)
 
 	return fmt.Sprintf("%s?%s", baseURL, params.Encode())
 }

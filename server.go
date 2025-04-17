@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -50,9 +49,9 @@ func initApp(environment string) (*server.Server, error) {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
-	if config.Config.GetBool("proxy.enabled") {
+	if config.C.Proxy.Enabled {
 		slog.Info("Proxy enabled, setting up HTTP client with proxy")
-		proxyURL, _ := url.Parse(config.Config.GetString("proxy.url"))
+		proxyURL, _ := url.Parse(config.C.Proxy.Url)
 		httpClient.Transport = &http.Transport{
 			Proxy: http.ProxyURL(proxyURL),
 			TLSClientConfig: &tls.Config{
@@ -62,19 +61,19 @@ func initApp(environment string) (*server.Server, error) {
 	}
 
 	svcs := services.NewServices(httpClient)
-	if config.Config.GetString("plex.admin_user_id") == "" {
-		plexUser, err := svcs.Plex.GetUserDetails(context.Background(), config.Config.GetString("plex.token"))
+	if config.C.Plex.AdminUserID == 0 {
+		plexUser, err := svcs.Plex.GetUserDetails(context.Background(), config.C.Plex.Token.Value())
 		if err != nil {
 			return nil, fmt.Errorf("failed to get Plex admin user details: %w", err)
 		}
-		config.Config.Set("plex.admin_user_id", strconv.Itoa(plexUser.ID))
+		config.C.Plex.AdminUserID = plexUser.ID
 		slog.Info("Plex admin user ID set in config",
-			"plex_admin_user_id", config.Config.GetString("plex.admin_user_id"),
+			"plex_admin_user_id", config.C.Plex.AdminUserID,
 			"plex_username", plexUser.Username)
 	}
 
 	// Set Stripe API key
-	stripe.Key = config.Config.GetString("stripe.secret_key")
+	stripe.Key = config.C.Stripe.SecretKey.Value()
 	if stripe.Key == "" {
 		return nil, fmt.Errorf("stripe API key not configured")
 	}

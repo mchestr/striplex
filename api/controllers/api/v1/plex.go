@@ -30,7 +30,7 @@ func (c *V1) CheckServerAccess(ctx *gin.Context) {
 		return
 	}
 
-	if userInfo.ID == config.Config.GetInt("plex.admin_user_id") {
+	if userInfo.ID == config.C.Plex.AdminUserID {
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":     "success",
 			"has_access": true,

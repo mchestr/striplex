@@ -38,7 +38,7 @@ func (s *V1) Webhook(ctx *gin.Context) {
 	}
 
 	// Verify webhook signature and construct the event
-	event, err := webhook.ConstructEvent(payload, sigHeader, config.Config.GetString("stripe.webhook_secret"))
+	event, err := webhook.ConstructEvent(payload, sigHeader, config.C.Stripe.WebhookSecret.Value())
 	if err != nil {
 		slog.Error("Failed to verify webhook signature", "error", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook signature"})
@@ -338,7 +338,7 @@ func (s *V1) handleEntitlementAddition(
 	// Iterate through entitlements and handle based on lookup key
 	for _, entitlement := range summary.Entitlements.Data {
 		switch entitlement.LookupKey {
-		case config.Config.GetString("stripe.entitlement_name"):
+		case config.C.Stripe.EntitlementName:
 			return s.shareLibraryWithCustomer(c, stripeCustomer, entitlement)
 		default:
 			slog.Info("Ignoring entitlement with unsupported lookup key",

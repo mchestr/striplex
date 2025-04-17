@@ -1,13 +1,72 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strings"
 
 	"github.com/spf13/viper"
 )
 
-var Config *viper.Viper
+var C AppConfig
+
+type Secret string
+
+func (secret Secret) String() string {
+	if secret == "" {
+		return ""
+	}
+	return "*****"
+}
+
+func (secret Secret) Value() string {
+	return string(secret)
+}
+
+func (secret Secret) MarshalJSON() ([]byte, error) {
+	return json.Marshal(secret.String())
+}
+
+type AppConfig struct {
+	Auth   AuthConfig
+	Server ServerConfig
+	Stripe StripeConfig
+	Plex   PlexConfig
+	Proxy  ProxyConfig
+}
+
+type AuthConfig struct {
+	SessionSecret Secret
+}
+
+type ServerConfig struct {
+	Address        string
+	Hostname       string
+	StaticPath     string
+	Mode           string
+	TrustedProxies []string
+}
+type StripeConfig struct {
+	PaymentMethodTypes  []string
+	SecretKey           Secret
+	WebhookSecret       Secret
+	EntitlementName     string
+	SubscriptionPriceID string
+	DonationPriceID     string
+}
+type PlexConfig struct {
+	ClientID        string
+	AdminUserID     int
+	ProductName     string
+	SharedLibraries []string
+	Token           Secret
+	ServerID        string
+}
+type ProxyConfig struct {
+	Enabled bool
+	Url     string
+}
 
 // Init is an exported method that takes the environment starts the viper
 // (external lib) and returns the configuration struct.
@@ -34,20 +93,64 @@ func Init(env string) error {
 		slog.Warn("error on merging configuration file", "env", env, "error", err)
 	}
 
-	Config = viper.New()
-	if err = Config.MergeConfigMap(defaultFileConfig.AllSettings()); err != nil {
+	config := viper.New()
+	if err = config.MergeConfigMap(defaultFileConfig.AllSettings()); err != nil {
 		slog.Warn("error on merging default configuration", "error", err)
 		return err
 	}
-	Config.SetConfigType("env")
-	Config.SetEnvPrefix("plefi")
-	Config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
-	Config.AutomaticEnv()
-	setDefaults()
+	config.SetConfigType("env")
+	config.SetEnvPrefix("plefi")
+	config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
+	config.AutomaticEnv()
+	setDefaults(config)
+	generateConfig(config)
 	return nil
 }
 
-func setDefaults() {
-	Config.SetDefault("server.address", ":8080")
-	Config.SetDefault("stripe.payment_method_types", []string{"card"})
+func setDefaults(config *viper.Viper) {
+	config.SetDefault("server.address", ":8080")
+	config.SetDefault("server.mode", "release")
+	config.SetDefault("stripe.payment_method_types", []string{"card"})
+	config.SetDefault("auth.session_secret", "changeme")
+}
+
+func generateConfig(config *viper.Viper) {
+	C = AppConfig{
+		Auth: AuthConfig{
+			SessionSecret: Secret(config.GetString("auth.session_secret")),
+		},
+		Server: ServerConfig{
+			Address:        config.GetString("server.address"),
+			Hostname:       config.GetString("server.hostname"),
+			StaticPath:     config.GetString("server.static_path"),
+			Mode:           config.GetString("server.mode"),
+			TrustedProxies: config.GetStringSlice("server.trusted_proxies"),
+		},
+		Stripe: StripeConfig{
+			PaymentMethodTypes:  config.GetStringSlice("stripe.payment_method_types"),
+			SecretKey:           Secret(config.GetString("stripe.secret_key")),
+			WebhookSecret:       Secret(config.GetString("stripe.webhook_secret")),
+			EntitlementName:     config.GetString("stripe.entitlement_name"),
+			SubscriptionPriceID: config.GetString("stripe.subscription_price_id"),
+			DonationPriceID:     config.GetString("stripe.donation_price_id"),
+		},
+		Plex: PlexConfig{
+			ClientID:        config.GetString("plex.client_id"),
+			AdminUserID:     config.GetInt("plex.admin_user_id"),
+			ProductName:     config.GetString("plex.product_name"),
+			SharedLibraries: strings.Split(config.GetString("plex.shared_libraries"), ","),
+			Token:           Secret(config.GetString("plex.token")),
+			ServerID:        config.GetString("plex.server_id"),
+		},
+		Proxy: ProxyConfig{
+			Enabled: config.GetBool("proxy.enabled"),
+			Url:     config.GetString("proxy.url"),
+		},
+	}
+	printJSON(C)
+}
+
+func printJSON(obj interface{}) {
+	bytes, _ := json.MarshalIndent(obj, "\t", "\t")
+	fmt.Println(string(bytes))
 }

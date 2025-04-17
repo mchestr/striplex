@@ -49,8 +49,8 @@ type PlexService struct {
 func NewPlexService(client *http.Client) *PlexService {
 	return &PlexService{
 		client:   client,
-		token:    config.Config.GetString("plex.token"),
-		serverID: config.Config.GetString("plex.server_id"),
+		token:    config.C.Plex.Token.Value(),
+		serverID: config.C.Plex.ServerID,
 	}
 }
 
@@ -93,7 +93,7 @@ func (p *PlexService) ShareLibrary(ctx context.Context, email string) error {
 		return fmt.Errorf("email cannot be empty")
 	}
 
-	sectionIDs, err := p.GetSectionIDsByNames(ctx, strings.Split(config.Config.GetString("plex.shared_libraries"), ","))
+	sectionIDs, err := p.GetSectionIDsByNames(ctx, config.C.Plex.SharedLibraries)
 	if err != nil {
 		return fmt.Errorf("failed to get section IDs: %w", err)
 	}
@@ -304,7 +304,7 @@ func (p *PlexService) GetUserDetails(ctx context.Context, plexToken string) (*mo
 // setCommonHeaders sets the common headers used in Plex API requests
 func (p *PlexService) setCommonHeaders(req *http.Request) {
 	req.Header.Set("X-Plex-Token", p.token)
-	req.Header.Set("X-Plex-Client-Identifier", config.Config.GetString("plex.client_id"))
+	req.Header.Set("X-Plex-Client-Identifier", config.C.Plex.ClientID)
 	req.Header.Set("Accept", "application/json")
 }
 
