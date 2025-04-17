@@ -216,10 +216,6 @@ function SubscriptionsPage() {
         </div>
         
         <div className="mt-6 flex flex-col items-center">
-          <div className="mb-4">
-            <BuyMeCoffee />
-          </div>
-          
           <button 
             onClick={() => navigate('/')} 
             className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-[#f1f2f6] rounded-md"
