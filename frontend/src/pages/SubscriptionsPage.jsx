@@ -207,6 +207,14 @@ function SubscriptionsPage() {
                           Cancel
                         </button>
                       )}
+                      {subscription.cancel_at_period_end && subscriptions.length <= 1 && (
+                        <button
+                          onClick={() => { window.location.href = '/stripe/subscribe'; }}
+                          className="px-3 py-1 bg-blue-800 hover:bg-blue-700 text-white rounded-md text-sm"
+                        >
+                          Renew
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

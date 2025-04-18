@@ -10,12 +10,10 @@ import (
 	"plefi/api/config"
 	"plefi/api/models"
 	"plefi/api/utils"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/customer"
-	"github.com/stripe/stripe-go/v82/subscription"
 	"github.com/stripe/stripe-go/v82/webhook"
 )
 
@@ -54,30 +52,6 @@ func (h *V1) Webhook(c echo.Context) error {
 	return nil
 }
 
-// SubscriptionItem represents a simplified subscription item
-type SubscriptionItem struct {
-	ID               string `json:"id"`
-	CurrentPeriodEnd int64  `json:"current_period_end"`
-	Price            struct {
-		UnitAmount int64  `json:"unit_amount"`
-		Currency   string `json:"currency"`
-		Recurring  struct {
-			Interval string `json:"interval"`
-		} `json:"recurring"`
-		Product struct {
-			Name string `json:"name"`
-		} `json:"product"`
-	} `json:"price"`
-}
-
-// SimplifiedSubscription represents minimal subscription data needed by frontend
-type SimplifiedSubscription struct {
-	ID                string             `json:"id"`
-	Status            string             `json:"status"`
-	CancelAtPeriodEnd bool               `json:"cancel_at_period_end"`
-	Items             []SubscriptionItem `json:"items"`
-}
-
 // GetSubscriptions retrieves all subscriptions for the authenticated user
 func (h *V1) GetSubscriptions(c echo.Context) error {
 	// Check user authentication
@@ -92,80 +66,19 @@ func (h *V1) GetSubscriptions(c echo.Context) error {
 		return fmt.Errorf("failed to cast user info to UserInfo type")
 	}
 
-	customersIter := customer.Search(
-		&stripe.CustomerSearchParams{
-			SearchParams: stripe.SearchParams{
-				Query: fmt.Sprintf("metadata['plex_user_id']:'%s'", strconv.Itoa(userInfoData.ID)),
-			},
-		},
-	)
-
-	simplifiedSubs := make([]SimplifiedSubscription, 0)
-
-	for customersIter.Next() {
-		cus := customersIter.Customer()
-
-		// Find all subscriptions for this customer
-		subscriptionIter := subscription.List(&stripe.SubscriptionListParams{
-			Customer: stripe.String(cus.ID),
-			Status:   stripe.String("active"),
-		})
-
-		for subscriptionIter.Next() {
-			sub := subscriptionIter.Subscription()
-
-			// Only include non-empty subscriptions
-			if len(sub.Items.Data) == 0 {
-				continue
-			}
-
-			// Create simplified subscription
-			simplifiedSub := SimplifiedSubscription{
-				ID:                sub.ID,
-				Status:            string(sub.Status),
-				CancelAtPeriodEnd: sub.CancelAtPeriodEnd,
-				Items:             make([]SubscriptionItem, 0, len(sub.Items.Data)),
-			}
-
-			// Add simplified items
-			for _, item := range sub.Items.Data {
-				simpleItem := SubscriptionItem{
-					ID:               item.ID,
-					CurrentPeriodEnd: item.CurrentPeriodEnd,
-				}
-
-				if item.Price != nil {
-					simpleItem.Price.UnitAmount = item.Price.UnitAmount
-					simpleItem.Price.Currency = string(item.Price.Currency)
-
-					if item.Price.Recurring != nil {
-						simpleItem.Price.Recurring.Interval = string(item.Price.Recurring.Interval)
-					}
-
-					if item.Price.Product != nil {
-						simpleItem.Price.Product.Name = item.Price.Product.Name
-					}
-				}
-
-				simplifiedSub.Items = append(simplifiedSub.Items, simpleItem)
-			}
-
-			simplifiedSubs = append(simplifiedSubs, simplifiedSub)
-		}
-
-		if err := subscriptionIter.Err(); err != nil {
-			slog.Error("Error listing subscriptions", "error", err, "customer", cus.ID)
-		}
+	subscription, err := h.services.Stripe.GetActiveSubscription(c.Request().Context(), userInfoData)
+	if err != nil {
+		slog.Error("Failed to retrieve subscriptions",
+			"error", err,
+			"user_id", userInfoData.ID)
 	}
 
-	if err := customersIter.Err(); err != nil {
-		return err
-	}
-
+	subscriptions := make([]models.SubscriptionSummary, 0)
+	subscriptions = append(subscriptions, *subscription)
 	// Return subscriptions data
 	c.JSON(http.StatusOK, map[string]any{
 		"status":        "success",
-		"subscriptions": simplifiedSubs,
+		"subscriptions": subscriptions,
 	})
 	return nil
 }
@@ -217,7 +130,7 @@ func (h *V1) CancelUserSubscription(c echo.Context) error {
 
 	slog.Info("Subscription canceled",
 		"subscription_id", updatedSub.ID,
-		"customer_id", updatedSub.Customer.ID,
+		"customer_id", updatedSub.CustomerID,
 		"plex_user_id", userInfoData.ID)
 
 	// Return success
@@ -371,18 +284,4 @@ func (s *V1) handleEntitlementRemoval(
 
 	slog.Info("Successfully unshared library with Plex user", "user_id", plexUserID, "customer", stripeCustomer.ID)
 	return nil
-}
-
-// parseUserInfo parses user info from the session
-func parseUserInfo(userInfo interface{}) (*models.UserInfo, error) {
-	var userInfoData models.UserInfo
-
-	if byteData, ok := userInfo.(string); ok {
-		if err := json.Unmarshal([]byte(byteData), &userInfoData); err != nil {
-			return nil, fmt.Errorf("invalid user info JSON: %w", err)
-		}
-		return &userInfoData, nil
-	}
-
-	return nil, fmt.Errorf("user info is not in expected string format")
 }

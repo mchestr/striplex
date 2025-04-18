@@ -65,7 +65,7 @@ function HomePage() {
     <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen overflow-x-hidden">
       <div className="bg-[#2d3436] shadow-lg shadow-black/20 p-8 md:p-12 rounded-xl text-center max-w-md w-[90%] relative">
         {/* Coffee ribbon */}
-        <a href="/stripe/donation-checkout" className="absolute -right-2 -top-2 overflow-hidden w-28 h-28 z-10 cursor-pointer">
+        <a href="/stripe/donation" className="absolute -right-2 -top-2 overflow-hidden w-28 h-28 z-10 cursor-pointer">
           <div className="absolute transform rotate-45 bg-[#e5a00d]/80 text-[#191a1c] font-bold text-xs py-1 right-[-35px] top-[32px] w-[170px] text-center shadow-sm hover:bg-[#f5b82e]/80 transition-colors duration-200">
             buy me a coffee ☕
           </div>
@@ -107,7 +107,7 @@ function HomePage() {
           ) : !hasPlexAccess ? (
             // Show subscribe button for users without subscriptions and without Plex access
             <button
-              onClick={() => window.location.href = '/stripe/checkout'}
+              onClick={() => window.location.href = '/stripe/subscribe'}
               className="w-full flex items-center justify-center bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold py-3.5 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 text-lg"
             >
               Subscribe Now

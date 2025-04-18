@@ -33,7 +33,7 @@ function StripeCancelPage() {
           </button>
           
           <button 
-            onClick={() => navigate(`/stripe/checkout`)}
+            onClick={() => navigate(`/stripe/subscribe`)}
             className="px-7 py-3 bg-[#ffb142] hover:bg-[#ff9f1a] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
           >
             Try Again
