@@ -177,12 +177,20 @@ function SubscriptionsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        subscription.cancel_at_period_end ? "bg-gray-800 text-gray-300" :
-                        subscription.status === "active" ? "bg-green-900 text-green-300" :
-                        subscription.status === "past_due" ? "bg-yellow-900 text-yellow-300" :
-                        "bg-red-900 text-red-300"
+                        subscription.cancel_at_period_end
+                          ? "bg-gray-800 text-gray-300"
+                          : (subscription.status === "active" || subscription.status === "trialing")
+                            ? "bg-green-900 text-green-300"
+                            : subscription.status === "past_due"
+                              ? "bg-yellow-900 text-yellow-300"
+                              : "bg-red-900 text-red-300"
                       }`}>
-                        {subscription.cancel_at_period_end ? "cancelled" : subscription.status}
+                        {subscription.cancel_at_period_end
+                          ? "cancelled"
+                          : (subscription.status === "active" || subscription.status === "trialing")
+                            ? "active"
+                            : subscription.status
+                        }
                       </span>
                       {subscription.cancel_at_period_end && (
                         <span className="block text-xs text-gray-400 mt-1">
