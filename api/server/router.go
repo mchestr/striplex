@@ -25,9 +25,15 @@ func NewRouter(svcs *services.Services, client *http.Client) *echo.Echo {
 		HTML5: true,
 	}))
 
+	xffHeaders := []echo.TrustOption{
+		echo.TrustLoopback(true),
+	}
+	if config.C.Server.TrustedProxies != nil {
+		xffHeaders = append(xffHeaders, echo.TrustIPRange(config.C.Server.TrustedProxies))
+	}
+
 	e.IPExtractor = echo.ExtractIPFromXFFHeader(
-		echo.TrustLoopback(true),                          // e.g. ipv4 start with 127.
-		echo.TrustIPRange(config.C.Server.TrustedProxies), // use parsed CIDRs
+		xffHeaders...,
 	)
 
 	// Initialize controllers
