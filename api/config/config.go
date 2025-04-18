@@ -35,6 +35,7 @@ type AppConfig struct {
 	Stripe StripeConfig
 	Plex   PlexConfig
 	Proxy  ProxyConfig
+	Debug  bool
 }
 
 type AuthConfig struct {
@@ -115,6 +116,7 @@ func setDefaults(config *viper.Viper) {
 	config.SetDefault("stripe.payment_method_types", []string{"card"})
 	config.SetDefault("auth.session_secret", "changeme")
 	config.SetDefault("auth.session_name", "plefi_session")
+	config.SetDefault("debug", false)
 }
 
 func generateConfig(config *viper.Viper) {
@@ -155,7 +157,9 @@ func generateConfig(config *viper.Viper) {
 			Url:     config.GetString("proxy.url"),
 		},
 	}
-	printJSON(C)
+	if C.Debug {
+		printJSON(C)
+	}
 }
 
 func printJSON(obj interface{}) {
