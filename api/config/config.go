@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -46,7 +47,7 @@ type ServerConfig struct {
 	Hostname       string
 	StaticPath     string
 	Mode           string
-	TrustedProxies []string
+	TrustedProxies *net.IPNet
 }
 type StripeConfig struct {
 	PaymentMethodTypes  []string
@@ -117,6 +118,10 @@ func setDefaults(config *viper.Viper) {
 }
 
 func generateConfig(config *viper.Viper) {
+	_, ipNet, err := net.ParseCIDR(config.GetString("server.trusted_proxies"))
+	if err != nil {
+		slog.Warn("error on parsing trusted proxies", "error", err)
+	}
 	C = AppConfig{
 		Auth: AuthConfig{
 			SessionSecret: Secret(config.GetString("auth.session_secret")),
@@ -127,7 +132,7 @@ func generateConfig(config *viper.Viper) {
 			Hostname:       config.GetString("server.hostname"),
 			StaticPath:     config.GetString("server.static_path"),
 			Mode:           config.GetString("server.mode"),
-			TrustedProxies: config.GetStringSlice("server.trusted_proxies"),
+			TrustedProxies: ipNet,
 		},
 		Stripe: StripeConfig{
 			PaymentMethodTypes:  config.GetStringSlice("stripe.payment_method_types"),

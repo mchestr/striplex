@@ -16,17 +16,22 @@ import (
 // NewRouter sets up and configures the application router with all routes.
 func NewRouter(svcs *services.Services, client *http.Client) *echo.Echo {
 	// Initialize router
-	r := echo.New()
-	r.Use(middleware.Recover())
-	r.Use(middleware.Logger())
-	r.Use(session.Middleware(sessions.NewCookieStore([]byte(config.C.Auth.SessionSecret))))
-	r.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	e := echo.New()
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.C.Auth.SessionSecret))))
+	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Root:  config.C.Server.StaticPath,
 		HTML5: true,
 	}))
 
+	e.IPExtractor = echo.ExtractIPFromXFFHeader(
+		echo.TrustLoopback(true),                          // e.g. ipv4 start with 127.
+		echo.TrustIPRange(config.C.Server.TrustedProxies), // use parsed CIDRs
+	)
+
 	// Initialize controllers
 	appController := controllers.NewAppController(client, svcs)
-	appController.GetRoutes(r)
-	return r
+	appController.GetRoutes(e)
+	return e
 }
