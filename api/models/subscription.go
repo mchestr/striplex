@@ -33,6 +33,9 @@ type RecurringItem struct {
 
 // NewSubscriptionSummary maps a Stripe subscription to our minimal model.
 func NewSubscriptionSummary(s *stripe.Subscription) *SubscriptionSummary {
+	if s == nil {
+		return nil
+	}
 	items := make([]SubscriptionItem, 0, len(s.Items.Data))
 	for _, it := range s.Items.Data {
 		items = append(items, SubscriptionItem{
