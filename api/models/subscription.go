@@ -22,8 +22,13 @@ type SubscriptionItem struct {
 }
 
 type PriceItem struct {
-	UnitAmount int64  `json:"unit_amount"`
-	Currency   string `json:"currency"`
+	UnitAmount int64         `json:"unit_amount"`
+	Currency   string        `json:"currency"`
+	Recurring  RecurringItem `json:"recurring"`
+}
+
+type RecurringItem struct {
+	Interval string `json:"interval"`
 }
 
 // NewSubscriptionSummary maps a Stripe subscription to our minimal model.
@@ -38,6 +43,9 @@ func NewSubscriptionSummary(s *stripe.Subscription) *SubscriptionSummary {
 			PriceItem: PriceItem{
 				UnitAmount: it.Price.UnitAmount,
 				Currency:   string(it.Price.Currency),
+				Recurring: RecurringItem{
+					Interval: string(it.Price.Recurring.Interval),
+				},
 			},
 		})
 	}
