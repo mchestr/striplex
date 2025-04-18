@@ -115,3 +115,22 @@ type PlexError struct {
 	Message string `json:"message"`
 	Status  int    `json:"status"`
 }
+
+// PlexPinResponse represents the response from Plex PIN creation API.
+type PlexPinResponse struct {
+	ID        int    `json:"id"`
+	Code      string `json:"code"`
+	AuthToken string `json:"authToken"`
+	ClientID  string `json:"clientIdentifier"`
+}
+
+// PlexUserResponse represents the user data returned by Plex API.
+type PlexUserResponse struct {
+	ID        int    `json:"id"`
+	UUID      string `json:"uuid"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Title     string `json:"title"`
+	Thumb     string `json:"thumb"`
+	AuthToken string `json:"authToken"`
+}

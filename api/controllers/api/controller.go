@@ -5,7 +5,7 @@ import (
 	v1Controller "plefi/api/controllers/api/v1"
 	"plefi/api/services"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 type ApiController struct {
@@ -22,7 +22,7 @@ func NewApiController(basePath string, client *http.Client, services *services.S
 	}
 }
 
-func (c *ApiController) GetRoutes(r *gin.RouterGroup) {
+func (c *ApiController) GetRoutes(r *echo.Group) {
 	v1 := r.Group("/v1")
 	{
 		v1Controller := v1Controller.NewV1Controller(c.basePath, c.client, c.services)

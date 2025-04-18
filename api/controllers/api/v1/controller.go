@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"plefi/api/services"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 type V1 struct {
@@ -20,7 +20,7 @@ func NewV1Controller(basePath string, client *http.Client, services *services.Se
 		services: services,
 	}
 }
-func (v *V1) GetRoutes(r *gin.RouterGroup) {
+func (v *V1) GetRoutes(r *echo.Group) {
 	user := r.Group("/user")
 	{
 		user.GET("/me", v.GetCurrentUser)

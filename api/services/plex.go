@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"plefi/api/config"
 	"plefi/api/models"
 	"strings"
@@ -33,6 +34,12 @@ type PlexServicer interface {
 
 	// GetUserDetails retrieves detailed information about the authenticated user
 	GetUserDetails(ctx context.Context, plexToken string) (*models.PlexDetailedUserResponse, error)
+
+	// ClaimPin retrieves the PIN status from Plex API
+	ClaimPin(ctx context.Context, pinID int) (*models.PlexPinResponse, error)
+
+	// GeneratePin creates a new Plex PIN for user authentication
+	GeneratePin(ctx context.Context) (*models.PlexPinResponse, error)
 }
 
 // Verify that PlexService implements the PlexServicer interface
@@ -299,6 +306,93 @@ func (p *PlexService) GetUserDetails(ctx context.Context, plexToken string) (*mo
 	}
 
 	return &userDetails, nil
+}
+
+func (p *PlexService) ClaimPin(c context.Context, pinID int) (*models.PlexPinResponse, error) {
+	// Create the request URL with the PIN ID
+	reqURL := fmt.Sprintf("https://plex.tv/api/v2/pins/%d", pinID)
+
+	// Create form data
+	formData := url.Values{}
+	formData.Set("X-Plex-Client-Identifier", config.C.Plex.ClientID)
+
+	// Create the request with context
+	req, err := http.NewRequestWithContext(
+		c,
+		http.MethodGet,
+		reqURL,
+		nil, // GET requests don't need a body
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create PIN check request: %w", err)
+	}
+	p.setCommonHeaders(req)
+
+	// Execute the request
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute PIN check request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse the response
+	var pinResponse models.PlexPinResponse
+	if err := json.NewDecoder(resp.Body).Decode(&pinResponse); err != nil {
+		return nil, fmt.Errorf("failed to parse PIN check response: %w", err)
+	}
+
+	return &pinResponse, nil
+}
+
+func (p *PlexService) GeneratePin(c context.Context) (*models.PlexPinResponse, error) {
+	// Create form data matching the Plex API requirements
+	formData := url.Values{
+		"strong":                   {"true"},
+		"X-Plex-Product":           {config.C.Plex.ProductName},
+		"X-Plex-Client-Identifier": {config.C.Plex.ClientID},
+	}
+
+	// Create the request with form data
+	req, err := http.NewRequestWithContext(
+		c,
+		http.MethodPost,
+		"https://plex.tv/api/v2/pins",
+		bytes.NewBufferString(formData.Encode()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create PIN request: %w", err)
+	}
+
+	// Set required headers
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Execute the request
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute PIN request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse the response
+	var pinResponse models.PlexPinResponse
+	if err := json.NewDecoder(resp.Body).Decode(&pinResponse); err != nil {
+		return nil, fmt.Errorf("failed to parse PIN response: %w", err)
+	}
+
+	return &pinResponse, nil
 }
 
 // setCommonHeaders sets the common headers used in Plex API requests

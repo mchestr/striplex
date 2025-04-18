@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"plefi/api/config"
 	"plefi/api/models"
+	"plefi/api/utils"
 	"strconv"
 
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/customer"
 	"github.com/stripe/stripe-go/v82/subscription"
@@ -20,41 +20,38 @@ import (
 )
 
 // Webhook handles incoming webhook events from Stripe.
-func (s *V1) Webhook(ctx *gin.Context) {
+func (h *V1) Webhook(c echo.Context) error {
 	// Read the request body
-	payload, err := io.ReadAll(ctx.Request.Body)
+	payload, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		slog.Error("Failed to read webhook request body", "error", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Error reading request body"})
-		return
+		return err
 	}
 
 	// Get the signature from the header
-	sigHeader := ctx.GetHeader("Stripe-Signature")
+	sigHeader := c.Request().Header.Get("Stripe-Signature")
 	if sigHeader == "" {
 		slog.Warn("Missing Stripe signature in webhook request")
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Missing Stripe-Signature header"})
-		return
+		return fmt.Errorf("missing Stripe signature")
 	}
 
 	// Verify webhook signature and construct the event
 	event, err := webhook.ConstructEvent(payload, sigHeader, config.C.Stripe.WebhookSecret.Value())
 	if err != nil {
 		slog.Error("Failed to verify webhook signature", "error", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook signature"})
-		return
+		return err
 	}
 
 	// Process the webhook event based on its type
-	if err := s.processWebhookEvent(ctx, event); err != nil {
+	if err := h.processWebhookEvent(c.Request().Context(), event); err != nil {
 		slog.Error("Failed to process webhook event",
 			"error", err,
 			"event_type", event.Type,
 			"event_id", event.ID)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return err
 	}
-	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
+	c.JSON(http.StatusOK, map[string]any{"status": "success"})
+	return nil
 }
 
 // SubscriptionItem represents a simplified subscription item
@@ -82,34 +79,17 @@ type SimplifiedSubscription struct {
 }
 
 // GetSubscriptions retrieves all subscriptions for the authenticated user
-func (s *V1) GetSubscriptions(ctx *gin.Context) {
+func (h *V1) GetSubscriptions(c echo.Context) error {
 	// Check user authentication
-	session := sessions.Default(ctx)
-	userInfo := session.Get("user_info")
-	if userInfo == nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"status": "error",
-			"error":  "Authentication required",
-		})
-		return
+	userInfo, err := utils.GetSessionData(c, utils.UserInfoState)
+	if err != nil || userInfo == nil {
+		slog.Error("Failed to get user info", "error", err)
+		return fmt.Errorf("user not authenticated")
 	}
-
-	// Parse user info
-	var userInfoData models.UserInfo
-	if userInfoString, ok := userInfo.(string); ok {
-		if err := json.Unmarshal([]byte(userInfoString), &userInfoData); err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"status": "error",
-				"error":  "Invalid session data",
-			})
-			return
-		}
-	} else {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status": "error",
-			"error":  "Unexpected session data format",
-		})
-		return
+	userInfoData, ok := userInfo.(*models.UserInfo)
+	if !ok {
+		slog.Error("Failed to cast user info to UserInfo type")
+		return fmt.Errorf("failed to cast user info to UserInfo type")
 	}
 
 	customersIter := customer.Search(
@@ -179,85 +159,73 @@ func (s *V1) GetSubscriptions(ctx *gin.Context) {
 	}
 
 	if err := customersIter.Err(); err != nil {
-		slog.Error("Error listing customers", "error", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status": "error",
-			"error":  "Failed to retrieve customer data",
-		})
-		return
+		return err
 	}
 
 	// Return subscriptions data
-	ctx.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, map[string]any{
 		"status":        "success",
 		"subscriptions": simplifiedSubs,
 	})
+	return nil
 }
 
 // CancelSubscriptionRequest represents the request body for canceling a subscription
 type CancelSubscriptionRequest struct {
-	SubscriptionID string `json:"subscription_id" binding:"required"`
+	SubscriptionID string `json:"subscription_id"`
 }
 
 // CancelUserSubscription cancels a specific subscription for the authenticated user
-func (s *V1) CancelUserSubscription(ctx *gin.Context) {
+func (h *V1) CancelUserSubscription(c echo.Context) error {
 	// Check for authentication
-	userInfo, err := models.GetUserInfo(ctx)
-	if err != nil || userInfo == nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"status": "error",
-			"error":  "Authentication required",
-		})
-		return
+	userInfo, err := utils.GetSessionData(c, utils.UserInfoState)
+	if err != nil {
+		return err
+	}
+	if userInfo == nil {
+		return fmt.Errorf("user not authenticated")
+	}
+	userInfoData, ok := userInfo.(*models.UserInfo)
+	if !ok {
+		return fmt.Errorf("failed to cast user info to UserInfo type")
 	}
 
 	// Parse request body to get subscription ID
 	var reqBody CancelSubscriptionRequest
-	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status": "error",
-			"error":  "Invalid request: subscription_id is required",
-		})
-		return
+	if err := c.Bind(&reqBody); err != nil {
+		return err
 	}
 
-	subscription, err := s.services.Stripe.GetSubscription(ctx, userInfo, reqBody.SubscriptionID)
+	subscription, err := h.services.Stripe.GetSubscription(c.Request().Context(), userInfoData, reqBody.SubscriptionID)
 	if err != nil {
 		slog.Error("Failed to retrieve subscription",
 			"error", err,
 			"subscription_id", reqBody.SubscriptionID,
-			"user_id", userInfo.ID)
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"status": "error",
-			"error":  "subscription not found",
-		})
-		return
+			"user_id", userInfoData.ID)
+		return err
 	}
 
 	// Cancel the specific subscription
-	updatedSub, err := s.services.Stripe.CancelAtEndSubscription(ctx, subscription.ID)
+	updatedSub, err := h.services.Stripe.CancelAtEndSubscription(c.Request().Context(), subscription.ID)
 	if err != nil {
 		slog.Error("Failed to cancel subscription",
 			"error", err,
 			"subscription_id", reqBody.SubscriptionID,
-			"user_id", userInfo.ID)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status": "error",
-			"error":  "Failed to cancel subscription",
-		})
-		return
+			"user_id", userInfoData.ID)
+		return err
 	}
 
 	slog.Info("Subscription canceled",
 		"subscription_id", updatedSub.ID,
 		"customer_id", updatedSub.Customer.ID,
-		"plex_user_id", userInfo.ID)
+		"plex_user_id", userInfoData.ID)
 
 	// Return success
-	ctx.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, map[string]any{
 		"status":       "success",
 		"subscription": updatedSub,
 	})
+	return nil
 }
 
 // processWebhookEvent handles different types of Stripe webhook events

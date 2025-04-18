@@ -1,44 +1,32 @@
 package server
 
 import (
-	"fmt"
-	"log/slog"
 	"net/http"
 	"plefi/api/config"
 	"plefi/api/controllers"
 	"plefi/api/services"
 
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 // NewRouter sets up and configures the application router with all routes.
-func NewRouter(svcs *services.Services, client *http.Client) *gin.Engine {
+func NewRouter(svcs *services.Services, client *http.Client) *echo.Echo {
 	// Initialize router
-	router := gin.Default()
-
-	staticPath := config.C.Server.StaticPath
-	slog.Info("static path", "path", staticPath)
-	router.Static("/static", fmt.Sprintf("%s/static", staticPath))
-	router.Static("/assets", fmt.Sprintf("%s/assets", staticPath))
-	router.StaticFile("/favicon.ico", fmt.Sprintf("%s/favicon.ico", staticPath))
-	router.StaticFile("/manifest.json", fmt.Sprintf("%s/manifest.json", staticPath))
-	router.NoRoute(func(c *gin.Context) {
-		c.File(fmt.Sprintf("%s/index.html", staticPath))
-	})
-
-	// Set Gin mode based on configuration
-	gin.SetMode(config.C.Server.Mode)
-
-	// Initialize session store
-	sessionSecret := []byte(config.C.Auth.SessionSecret)
-	store := cookie.NewStore(sessionSecret)
-	router.Use(sessions.Sessions("session_store", store))
+	r := echo.New()
+	r.Use(middleware.Recover())
+	r.Use(middleware.Logger())
+	r.Use(session.Middleware(sessions.NewCookieStore([]byte(config.C.Auth.SessionSecret))))
+	r.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Root:  config.C.Server.StaticPath,
+		HTML5: true,
+	}))
 
 	// Initialize controllers
 	appController := controllers.NewAppController(client, svcs)
-	appController.GetRoutes(&router.RouterGroup)
-
-	return router
+	appController.GetRoutes(r)
+	return r
 }

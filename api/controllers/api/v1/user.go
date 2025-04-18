@@ -3,41 +3,47 @@ package v1controller
 import (
 	"net/http"
 	"plefi/api/models"
+	"plefi/api/utils"
 
 	"log/slog"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 // GetCurrentUser returns the currently authenticated user's information
-func (c *V1) GetCurrentUser(ctx *gin.Context) {
-	userInfo, err := models.GetUserInfo(ctx)
+func (h *V1) GetCurrentUser(c echo.Context) error {
+	userInfo, err := utils.GetSessionData(c, utils.UserInfoState)
 	if err != nil {
 		slog.Error("Failed to get user info", "error", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status": "error",
-			"error":  "Internal server error",
-		})
-		return
+		return err
 	}
-
 	if userInfo == nil {
 		// User is not authenticated
-		ctx.JSON(http.StatusOK, gin.H{
+		c.JSON(http.StatusOK, map[string]any{
 			"status": "success",
 			"user":   nil,
 		})
-		return
+		return nil
+	}
+
+	userInfoData, ok := userInfo.(*models.UserInfo)
+	if !ok {
+		c.JSON(http.StatusOK, map[string]any{
+			"status": "success",
+			"user":   nil,
+		})
+		return nil
 	}
 
 	// Return user info
-	ctx.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, map[string]any{
 		"status": "success",
-		"user": gin.H{
-			"id":       userInfo.ID,
-			"uuid":     userInfo.UUID,
-			"username": userInfo.Username,
-			"email":    userInfo.Email,
+		"user": map[string]any{
+			"id":       userInfoData.ID,
+			"uuid":     userInfoData.UUID,
+			"username": userInfoData.Username,
+			"email":    userInfoData.Email,
 		},
 	})
+	return nil
 }

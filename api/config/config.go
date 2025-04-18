@@ -38,6 +38,7 @@ type AppConfig struct {
 
 type AuthConfig struct {
 	SessionSecret Secret
+	SessionName   string
 }
 
 type ServerConfig struct {
@@ -112,12 +113,14 @@ func setDefaults(config *viper.Viper) {
 	config.SetDefault("server.mode", "release")
 	config.SetDefault("stripe.payment_method_types", []string{"card"})
 	config.SetDefault("auth.session_secret", "changeme")
+	config.SetDefault("auth.session_name", "plefi_session")
 }
 
 func generateConfig(config *viper.Viper) {
 	C = AppConfig{
 		Auth: AuthConfig{
 			SessionSecret: Secret(config.GetString("auth.session_secret")),
+			SessionName:   config.GetString("auth.session_name"),
 		},
 		Server: ServerConfig{
 			Address:        config.GetString("server.address"),

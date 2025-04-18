@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"net/http"
+	"plefi/api/config"
 	"plefi/api/services"
 
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 
 	apicontroller "plefi/api/controllers/api"
 	plexcontroller "plefi/api/controllers/plex"
@@ -24,64 +25,48 @@ func NewAppController(client *http.Client, services *services.Services) *AppCont
 	}
 }
 
-func (c *AppController) GetRoutes(r *gin.RouterGroup) {
+func (c *AppController) GetRoutes(r *echo.Echo) {
 	// Load templates
 	r.GET("/health", c.Health)
 	r.POST("/logout", c.Logout)
 
 	api := r.Group("/api")
 	{
-		apiController := apicontroller.NewApiController(api.BasePath(), c.client, c.services)
-		apiController.GetRoutes(api)
+		c := apicontroller.NewApiController("/api", c.client, c.services)
+		c.GetRoutes(api)
 	}
 
 	plex := r.Group("/plex")
 	{
-		plexController := plexcontroller.NewPlexController(plex.BasePath(), c.client, c.services)
+		plexController := plexcontroller.NewPlexController("/plex", c.client, c.services)
 		plexController.GetRoutes(plex)
 	}
 
 	stripe := r.Group("/stripe")
 	{
-		stripeController := stripecontroller.NewStripeController(stripe.BasePath(), c.client, c.services)
+		stripeController := stripecontroller.NewStripeController("/stripe", c.client, c.services)
 		stripeController.GetRoutes(stripe)
 	}
 }
 
 // Logout clears the user session by deleting the user_info key
-func (p AppController) Logout(c *gin.Context) {
-	session := sessions.Default(c)
-	session.Delete("user_info")
-	err := session.Save()
+func (h AppController) Logout(c echo.Context) error {
+	s, err := session.Get(config.C.Auth.SessionName, c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status": "error",
-			"error":  "Failed to save session: " + err.Error(),
-		})
-		return
+		return err
 	}
+	s.Values["user_info"] = nil
+	err = s.Save(c.Request(), c.Response())
+	if err != nil {
+		return err
+	}
+	c.Redirect(http.StatusFound, "/")
+	return nil
+}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "Successfully logged out",
+func (h AppController) Health(c echo.Context) error {
+	c.JSON(http.StatusOK, map[string]string{
+		"status": "ok",
 	})
-}
-
-func (h AppController) Health(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
-}
-
-// Subscriptions displays the subscriptions management page
-func (a *AppController) Subscriptions(c *gin.Context) {
-	// Check if user is authenticated
-	session := sessions.Default(c)
-	userInfo := session.Get("user_info")
-	if userInfo == nil {
-		// If not authenticated, redirect to home page
-		c.Redirect(http.StatusFound, "/")
-		return
-	}
-
-	// Render the subscriptions template
-	c.HTML(http.StatusOK, "subscriptions.tmpl", gin.H{})
+	return nil
 }
