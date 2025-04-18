@@ -1,18 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const LoginSuccessPage = () => {
-  useEffect(() => {
-    // Add a slight delay before attempting to close
-    const timeoutId = setTimeout(() => {
-      // This will only work if this page is opened in a popup window
-      if (window.opener) {
-        // Send a message to the parent window before closing
-        window.opener.postMessage({ type: 'PLEX_AUTH_SUCCESS' }, '*');
-      }
-    }, 1500);
+  const [countdown, setCountdown] = useState(5);
 
-    return () => clearTimeout(timeoutId);
+  // decrement every second
+  useEffect(() => {
+    const intervalId = setInterval(() => setCountdown(prev => prev - 1), 1000);
+    return () => clearInterval(intervalId);
   }, []);
+
+  // when countdown hits zero, close
+  useEffect(() => {
+    if (countdown <= 0) handleClose();
+  }, [countdown]);
 
   const handleClose = () => {
     if (window.opener) {
@@ -31,6 +31,9 @@ const LoginSuccessPage = () => {
         </div>
         <h1 className="text-3xl font-bold mb-4">Login Successful!</h1>
         <p className="text-lg mb-8">You have successfully authenticated with Plex.</p>
+        <p className="text-sm text-gray-400 mb-4">
+          This window will close in {countdown} second{countdown !== 1 ? 's' : ''}.
+        </p>
         <p className="text-sm text-gray-400 mb-6">You can now close this window and return to the application.</p>
         
         <button 
