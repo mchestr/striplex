@@ -120,6 +120,7 @@ func (h *PlexController) Callback(c echo.Context) error {
 		UUID:     userInfo.UUID,
 		Username: userInfo.Username,
 		Email:    userInfo.Email,
+		IsAdmin:  config.C.Plex.AdminUserID == userInfo.ID,
 	}); err != nil {
 		slog.Error("Failed to save user info to session", "error", err)
 		return err

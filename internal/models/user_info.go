@@ -5,6 +5,7 @@ type UserInfo struct {
 	UUID     string `json:"uuid"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 type PlexAuth struct {

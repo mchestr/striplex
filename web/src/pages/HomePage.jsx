@@ -5,6 +5,7 @@ function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasPlexAccess, setHasPlexAccess] = useState(null);
   const [hasSubscriptions, setHasSubscriptions] = useState(false);
+  const [hasAdmin, setHasAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,16 +19,29 @@ function HomePage() {
         } else {
           setHasPlexAccess(false);
         }
-        
+
         // Check if user has subscriptions
         const subscriptionsResponse = await fetch('/api/v1/stripe/subscriptions');
         if (subscriptionsResponse.ok) {
           const subscriptionsData = await subscriptionsResponse.json();
-          setHasSubscriptions(subscriptionsData.subscriptions && subscriptionsData.subscriptions.length > 0);
+          setHasSubscriptions(
+            subscriptionsData.subscriptions &&
+            subscriptionsData.subscriptions.length > 0
+          );
+        }
+
+        // Check admin via user info
+        const meResponse = await fetch('/api/v1/user/me');
+        if (meResponse.ok) {
+          const meData = await meResponse.json();
+          setHasAdmin(meData.user?.is_admin || false);
+        } else {
+          setHasAdmin(false);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
         setHasPlexAccess(false);
+        setHasAdmin(false);
       } finally {
         setIsLoading(false);
       }
@@ -70,6 +84,15 @@ function HomePage() {
             buy me a coffee ☕
           </div>
         </a>
+
+        {/* Admin banner along the bottom */}
+        {hasAdmin && (
+          <a
+            className="absolute bottom-0 left-0 right-0 bg-red-600/80 text-white py-2 text-center font-bold text-sm rounded-b-xl hover:bg-red-700/80 transition-colors duration-200"
+          >
+            Admin
+          </a>
+        )}
 
         <h1 className="text-4xl md:text-[3.5rem] font-extrabold mb-6 tracking-tight text-[#f1f2f6] leading-tight">PleFi</h1>
         
@@ -115,8 +138,8 @@ function HomePage() {
           ) : null}
         </div>
         
-        {/* Sign out link */}
-        <div className="mt-8">
+        {/* Sign out link - add more bottom margin when admin banner is shown */}
+        <div className={`mt-8 ${hasAdmin ? 'mb-8' : ''}`}>
           <button 
             onClick={handleSignOut}
             className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
