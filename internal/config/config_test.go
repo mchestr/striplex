@@ -129,7 +129,7 @@ func TestGenerateConfig(t *testing.T) {
 func TestInitIntegration(t *testing.T) {
 	// create temp project layout
 	tmp := t.TempDir()
-	apiconf := filepath.Join(tmp, "api", "config")
+	apiconf := filepath.Join(tmp, "internal", "config")
 	if err := os.MkdirAll(apiconf, 0755); err != nil {
 		t.Fatal(err)
 	}
