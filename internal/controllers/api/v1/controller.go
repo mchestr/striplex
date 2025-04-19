@@ -2,6 +2,7 @@ package v1controller
 
 import (
 	"net/http"
+	"plefi/internal/middleware"
 	"plefi/internal/services"
 
 	"github.com/labstack/echo/v4"
@@ -23,19 +24,19 @@ func NewV1Controller(basePath string, client *http.Client, services *services.Se
 func (v *V1) GetRoutes(r *echo.Group) {
 	user := r.Group("/user")
 	{
-		user.GET("/me", v.GetCurrentUser)
+		user.GET("/me", middleware.AnonymousHandler(v.GetCurrentUser))
 	}
 
 	stripe := r.Group("/stripe")
 	{
 		stripe.POST("/webhook", v.Webhook)
 		// Add new route for subscriptions
-		stripe.GET("/subscriptions", v.GetSubscriptions)
-		stripe.POST("/cancel-subscription", v.CancelUserSubscription)
+		stripe.GET("/subscriptions", middleware.UserHandler(v.GetSubscriptions))
+		stripe.POST("/cancel-subscription", middleware.UserHandler(v.CancelUserSubscription))
 	}
 
 	plex := r.Group("/plex")
 	{
-		plex.GET("/check-access", v.CheckServerAccess)
+		plex.GET("/check-access", middleware.UserHandler(v.CheckServerAccess))
 	}
 }

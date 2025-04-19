@@ -5,36 +5,13 @@ import (
 	"net/http"
 	"plefi/internal/config"
 	"plefi/internal/models"
-	"plefi/internal/utils"
 
 	"github.com/labstack/echo/v4"
 )
 
 // CheckServerAccess checks if the authenticated user has access to the Plex server
-func (h *V1) CheckServerAccess(c echo.Context) error {
-	// Get user info from the session
-	userInfo, err := utils.GetSessionData(c, utils.UserInfoState)
-	if err != nil {
-		slog.Error("Failed to get user info", "error", err)
-		return err
-	}
-	if userInfo == nil {
-		c.JSON(http.StatusOK, map[string]any{
-			"status":     "success",
-			"has_access": false,
-		})
-		return nil
-	}
-	userInfoData, ok := userInfo.(*models.UserInfo)
-	if !ok {
-		c.JSON(http.StatusOK, map[string]any{
-			"status":     "success",
-			"has_access": false,
-		})
-		return nil
-	}
-
-	if userInfoData.ID == config.C.Plex.AdminUserID {
+func (h *V1) CheckServerAccess(c echo.Context, user *models.UserInfo) error {
+	if user.ID == config.C.Plex.AdminUserID {
 		c.JSON(http.StatusOK, map[string]any{
 			"status":     "success",
 			"has_access": true,
@@ -43,11 +20,11 @@ func (h *V1) CheckServerAccess(c echo.Context) error {
 	}
 
 	// Check if the user has access to the server
-	hasAccess, err := h.services.Plex.UserHasServerAccess(c.Request().Context(), userInfoData.ID)
+	hasAccess, err := h.services.Plex.UserHasServerAccess(c.Request().Context(), user.ID)
 	if err != nil {
 		slog.Error("Failed to check server access",
 			"error", err,
-			"user_id", userInfoData.ID)
+			"user_id", user.ID)
 		return err
 	}
 

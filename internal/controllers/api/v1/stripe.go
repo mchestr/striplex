@@ -10,7 +10,6 @@ import (
 	"plefi/internal/config"
 	"plefi/internal/db"
 	"plefi/internal/models"
-	"plefi/internal/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v82"
@@ -54,24 +53,12 @@ func (h *V1) Webhook(c echo.Context) error {
 }
 
 // GetSubscriptions retrieves all subscriptions for the authenticated user
-func (h *V1) GetSubscriptions(c echo.Context) error {
-	// Check user authentication
-	userInfo, err := utils.GetSessionData(c, utils.UserInfoState)
-	if err != nil || userInfo == nil {
-		slog.Error("Failed to get user info", "error", err)
-		return fmt.Errorf("user not authenticated")
-	}
-	userInfoData, ok := userInfo.(*models.UserInfo)
-	if !ok {
-		slog.Error("Failed to cast user info to UserInfo type")
-		return fmt.Errorf("failed to cast user info to UserInfo type")
-	}
-
-	subscription, err := h.services.Stripe.GetActiveSubscription(c.Request().Context(), userInfoData)
+func (h *V1) GetSubscriptions(c echo.Context, user *models.UserInfo) error {
+	subscription, err := h.services.Stripe.GetActiveSubscription(c.Request().Context(), user)
 	if err != nil {
 		slog.Error("Failed to retrieve subscriptions",
 			"error", err,
-			"user_id", userInfoData.ID)
+			"user_id", user.ID)
 	}
 
 	subscriptions := make([]models.SubscriptionSummary, 0)
@@ -92,32 +79,19 @@ type CancelSubscriptionRequest struct {
 }
 
 // CancelUserSubscription cancels a specific subscription for the authenticated user
-func (h *V1) CancelUserSubscription(c echo.Context) error {
-	// Check for authentication
-	userInfo, err := utils.GetSessionData(c, utils.UserInfoState)
-	if err != nil {
-		return err
-	}
-	if userInfo == nil {
-		return fmt.Errorf("user not authenticated")
-	}
-	userInfoData, ok := userInfo.(*models.UserInfo)
-	if !ok {
-		return fmt.Errorf("failed to cast user info to UserInfo type")
-	}
-
+func (h *V1) CancelUserSubscription(c echo.Context, user *models.UserInfo) error {
 	// Parse request body to get subscription ID
 	var reqBody CancelSubscriptionRequest
 	if err := c.Bind(&reqBody); err != nil {
 		return err
 	}
 
-	subscription, err := h.services.Stripe.GetSubscription(c.Request().Context(), userInfoData, reqBody.SubscriptionID)
+	subscription, err := h.services.Stripe.GetSubscription(c.Request().Context(), user, reqBody.SubscriptionID)
 	if err != nil {
 		slog.Error("Failed to retrieve subscription",
 			"error", err,
 			"subscription_id", reqBody.SubscriptionID,
-			"user_id", userInfoData.ID)
+			"user_id", user.ID)
 		return err
 	}
 
@@ -127,14 +101,14 @@ func (h *V1) CancelUserSubscription(c echo.Context) error {
 		slog.Error("Failed to cancel subscription",
 			"error", err,
 			"subscription_id", reqBody.SubscriptionID,
-			"user_id", userInfoData.ID)
+			"user_id", user.ID)
 		return err
 	}
 
 	slog.Info("Subscription canceled",
 		"subscription_id", updatedSub.ID,
 		"customer_id", updatedSub.CustomerID,
-		"plex_user_id", userInfoData.ID)
+		"plex_user_id", user.ID)
 
 	// Return success
 	c.JSON(http.StatusOK, map[string]any{
