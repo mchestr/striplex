@@ -8,16 +8,13 @@ import (
 	"net/http"
 	"net/url"
 	"plefi/internal/config"
+	"plefi/internal/db"
 	"plefi/internal/models"
 	"plefi/internal/services"
 	"plefi/internal/utils"
 	"time"
 
 	"github.com/labstack/echo/v4"
-)
-
-const (
-	plexSessionState = "plex_auth_state"
 )
 
 // PlexController handles Plex API authentication and user management
@@ -129,6 +126,13 @@ func (h *PlexController) Callback(c echo.Context) error {
 	}
 	if err := utils.SaveSessionData(c, utils.PlexSessionState, nil); err != nil {
 		slog.Error("Failed to clear plex auth from session", "error", err)
+		return err
+	}
+	if err := db.DB.SavePlexToken(c.Request().Context(), models.PlexToken{
+		UserID:      userInfo.ID,
+		AccessToken: pinStatus.AuthToken,
+	}); err != nil {
+		slog.Error("Failed to save Plex token to database", "error", err)
 		return err
 	}
 

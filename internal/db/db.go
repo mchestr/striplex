@@ -1,0 +1,64 @@
+package db
+
+import (
+	"context"
+	"database/sql"
+	"plefi/internal/models"
+
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
+)
+
+var DB Database
+
+type Database interface {
+	Migrate(ctx context.Context) error
+	SavePlexToken(ctx context.Context, tok models.PlexToken) error
+	GetPlexToken(ctx context.Context, userID int) (models.PlexToken, error)
+}
+
+type sqlDB struct {
+	conn *sql.DB
+}
+
+func Init(driver, dsn string) error {
+	conn, err := sql.Open(driver, dsn)
+	if err != nil {
+		return err
+	}
+	DB = &sqlDB{conn: conn}
+	return nil
+}
+
+func (db *sqlDB) Migrate(ctx context.Context) error {
+	_, err := db.conn.ExecContext(ctx, `
+    CREATE TABLE IF NOT EXISTS plex_tokens (
+        user_id       INT PRIMARY KEY,
+        access_token  TEXT NOT NULL,
+        created_at	  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at 	  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );`)
+	return err
+}
+
+func (db *sqlDB) SavePlexToken(ctx context.Context, tok models.PlexToken) error {
+	_, err := db.conn.ExecContext(ctx, `
+    INSERT INTO plex_tokens(user_id, access_token)
+    VALUES($1,$2)
+    ON CONFLICT(user_id) DO UPDATE SET
+        access_token  = EXCLUDED.access_token,
+        updated_at    = CURRENT_TIMESTAMP;`,
+		tok.UserID, tok.AccessToken,
+	)
+	return err
+}
+
+func (db *sqlDB) GetPlexToken(ctx context.Context, userID int) (models.PlexToken, error) {
+	var tok models.PlexToken
+	row := db.conn.QueryRowContext(ctx, `
+        SELECT user_id, access_token, created_at, updated_at
+          FROM plex_tokens
+         WHERE user_id = $1`, userID)
+	err := row.Scan(&tok.UserID, &tok.AccessToken, &tok.CreatedAt, &tok.UpdatedAt)
+	return tok, err
+}

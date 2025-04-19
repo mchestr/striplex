@@ -21,7 +21,7 @@ type PlexServicer interface {
 	UnshareLibrary(ctx context.Context, userID string) error
 
 	// ShareLibrary shares specific libraries with a Plex user
-	ShareLibrary(ctx context.Context, email string) error
+	ShareLibrary(ctx context.Context, email string) (*models.PlexShareResponse, error)
 
 	// GetSectionIDsByNames retrieves section IDs that match the provided section names
 	GetSectionIDsByNames(ctx context.Context, sectionNames []string) ([]int, error)
@@ -40,6 +40,12 @@ type PlexServicer interface {
 
 	// GeneratePin creates a new Plex PIN for user authentication
 	GeneratePin(ctx context.Context) (*models.PlexPinResponse, error)
+
+	// AcceptInvite allows a user to accept a Plex library invitation using the invite token
+	AcceptInvite(ctx context.Context, plexToken string, inviteID int) error
+
+	// GetMachineIdentity returns the server's machineIdentifier from the identity endpoint
+	GetMachineIdentity(ctx context.Context, url, plexToken string) (string, error)
 }
 
 // Verify that PlexService implements the PlexServicer interface
@@ -47,17 +53,15 @@ var _ PlexServicer = (*PlexService)(nil)
 
 // PlexService handles interactions with the Plex Media Server API
 type PlexService struct {
-	client   *http.Client
-	token    string
-	serverID string
+	client *http.Client
+	token  string
 }
 
 // NewPlexService creates a new PlexService instance
 func NewPlexService(client *http.Client) *PlexService {
 	return &PlexService{
-		client:   client,
-		token:    config.C.Plex.Token.Value(),
-		serverID: config.C.Plex.ServerID,
+		client: client,
+		token:  config.C.Plex.Token.Value(),
 	}
 }
 
@@ -95,19 +99,19 @@ func (p *PlexService) UnshareLibrary(ctx context.Context, userID string) error {
 }
 
 // ShareLibrary shares specific libraries with a Plex user
-func (p *PlexService) ShareLibrary(ctx context.Context, email string) error {
+func (p *PlexService) ShareLibrary(ctx context.Context, email string) (*models.PlexShareResponse, error) {
 	if email == "" {
-		return fmt.Errorf("email cannot be empty")
+		return nil, fmt.Errorf("email cannot be empty")
 	}
 
 	sectionIDs, err := p.GetSectionIDsByNames(ctx, config.C.Plex.SharedLibraries)
 	if err != nil {
-		return fmt.Errorf("failed to get section IDs: %w", err)
+		return nil, fmt.Errorf("failed to get section IDs: %w", err)
 	}
 
 	payload := map[string]interface{}{
 		"invitedEmail":      email,
-		"machineIdentifier": p.serverID,
+		"machineIdentifier": config.C.Plex.MachineIdentifier,
 		"librarySectionIds": sectionIDs,
 		"skipFriendship":    true,
 		"settings": map[string]interface{}{
@@ -124,13 +128,13 @@ func (p *PlexService) ShareLibrary(ctx context.Context, email string) error {
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("failed to marshal JSON payload: %w", err)
+		return nil, fmt.Errorf("failed to marshal JSON payload: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://clients.plex.tv/api/v2/shared_servers",
 		bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return fmt.Errorf("failed to create share request: %w", err)
+		return nil, fmt.Errorf("failed to create share request: %w", err)
 	}
 
 	p.setCommonHeaders(req)
@@ -138,35 +142,39 @@ func (p *PlexService) ShareLibrary(ctx context.Context, email string) error {
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("share request failed: %w", err)
+		return nil, fmt.Errorf("share request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	// Check response status code
 	switch resp.StatusCode {
 	case http.StatusOK, http.StatusCreated:
-		return nil
+		var shareResp models.PlexShareResponse
+		if err := json.Unmarshal(body, &shareResp); err != nil {
+			return nil, fmt.Errorf("failed to parse share response: %w", err)
+		}
+		return &shareResp, nil
 	case http.StatusUnauthorized:
 		slog.Warn("Unauthorized Plex token", "email", email)
-		return fmt.Errorf("invalid Plex token")
+		return nil, fmt.Errorf("invalid Plex token")
 	case http.StatusBadRequest:
 		// Try to parse structured error if available
 		var plexErr models.PlexErrorResponse
 		if err := json.Unmarshal(body, &plexErr); err == nil && len(plexErr.Errors) > 0 {
-			return fmt.Errorf("bad request: %s", plexErr.Errors[0].Message)
+			return nil, fmt.Errorf("bad request: %s", plexErr.Errors[0].Message)
 		}
-		return fmt.Errorf("bad request: %s", string(body))
+		return nil, fmt.Errorf("bad request: %s", string(body))
 	default:
 		slog.Debug("Share library failed",
 			"status", resp.Status,
 			"response", string(body),
 			"email", email)
-		return fmt.Errorf("API returned unexpected status: %d %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("API returned unexpected status: %d %s", resp.StatusCode, resp.Status)
 	}
 }
 
@@ -212,7 +220,7 @@ func (p *PlexService) GetUsers(ctx context.Context) ([]models.PlexUser, error) {
 
 // GetSectionIDsByNames retrieves section IDs that match the provided section names
 func (p *PlexService) GetSectionIDsByNames(ctx context.Context, sectionNames []string) ([]int, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://plex.tv/api/v2/servers/%s", p.serverID), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://plex.tv/api/v2/servers/%s", config.C.Plex.MachineIdentifier), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -259,7 +267,7 @@ func (p *PlexService) UserHasServerAccess(ctx context.Context, userID int) (bool
 		return false, fmt.Errorf("failed to get users: %w", err)
 	}
 
-	serverID := p.serverID
+	serverID := config.C.Plex.MachineIdentifier
 	for _, user := range users {
 		if user.ID == userID {
 			// Found the user, now check if they have access to our server
@@ -393,6 +401,66 @@ func (p *PlexService) GeneratePin(c context.Context) (*models.PlexPinResponse, e
 	}
 
 	return &pinResponse, nil
+}
+
+// AcceptInvite allows a user to accept a Plex library invitation using the invite token
+func (p *PlexService) AcceptInvite(ctx context.Context, plexToken string, inviteID int) error {
+	reqURL := fmt.Sprintf("https://plex.tv/api/v2/shared_servers/%d/accept", inviteID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create accept invite request: %w", err)
+	}
+
+	p.setCommonHeaders(req)
+	req.Header.Set("X-Plex-Token", plexToken)
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("accept invite request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		slog.Debug("Accept invite failed",
+			"status", resp.Status,
+			"response", string(body))
+		return fmt.Errorf("accept invite API returned error status: %d %s", resp.StatusCode, resp.Status)
+	}
+
+	return nil
+}
+
+// GetMachineIdentity retrieves the machineIdentifier from the Plex identity endpoint
+func (p *PlexService) GetMachineIdentity(ctx context.Context, url, plexToken string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/identity", url), nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create identity request: %w", err)
+	}
+	p.setCommonHeaders(req)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-Plex-Token", plexToken)
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("identity request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("unexpected status: %d %s", resp.StatusCode, string(body))
+	}
+
+	var ir struct {
+		MediaContainer struct {
+			MachineIdentifier string `json:"machineIdentifier"`
+		} `json:"MediaContainer"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&ir); err != nil {
+		return "", fmt.Errorf("failed to parse identity response: %w", err)
+	}
+
+	return ir.MediaContainer.MachineIdentifier, nil
 }
 
 // setCommonHeaders sets the common headers used in Plex API requests

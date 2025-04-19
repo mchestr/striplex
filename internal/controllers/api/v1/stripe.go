@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"plefi/internal/config"
+	"plefi/internal/db"
 	"plefi/internal/models"
 	"plefi/internal/utils"
 
@@ -253,8 +254,24 @@ func (s *V1) shareLibraryWithCustomer(
 	}
 
 	// Share Plex library with the user
-	if err := s.services.Plex.ShareLibrary(ctx, plexUserEmail); err != nil {
+	slog.Info("Sharing Plex library with user",
+		"customer", stripeCustomer.ID,
+		"plex_user", plexUserEmail,
+		"entitlement", entitlement.LookupKey)
+	invite, err := s.services.Plex.ShareLibrary(ctx, plexUserEmail)
+	if err != nil {
 		return fmt.Errorf("failed to share Plex library with %s: %w", plexUserEmail, err)
+	}
+	slog.Info("Plex library shared successfully, Accepting invite...",
+		"invite_id", invite.ID,
+		"plex_user", plexUserEmail,
+		"customer", stripeCustomer.ID)
+	token, err := db.DB.GetPlexToken(ctx, invite.InvitedID)
+	if err != nil {
+		return fmt.Errorf("failed to get Plex token for user %d: %w", invite.InvitedID, err)
+	}
+	if err := s.services.Plex.AcceptInvite(ctx, token.AccessToken, invite.ID); err != nil {
+		return fmt.Errorf("failed to accept Plex invite for user %d: %w", invite.InvitedID, err)
 	}
 
 	slog.Info("Shared Plex library with user",

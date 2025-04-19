@@ -35,6 +35,7 @@ type AppConfig struct {
 	Stripe StripeConfig
 	Plex   PlexConfig
 	Proxy  ProxyConfig
+	DB     DBConfig
 	Debug  bool
 }
 
@@ -50,6 +51,7 @@ type ServerConfig struct {
 	Mode           string
 	TrustedProxies *net.IPNet
 }
+
 type StripeConfig struct {
 	PaymentMethodTypes  []string
 	SecretKey           Secret
@@ -58,17 +60,25 @@ type StripeConfig struct {
 	SubscriptionPriceID string
 	DonationPriceID     string
 }
+
 type PlexConfig struct {
-	ClientID        string
-	AdminUserID     int
-	ProductName     string
-	SharedLibraries []string
-	Token           Secret
-	ServerID        string
+	ClientID          string
+	AdminUserID       int
+	ProductName       string
+	SharedLibraries   []string
+	Token             Secret
+	Url               string
+	MachineIdentifier string
 }
+
 type ProxyConfig struct {
 	Enabled bool
 	Url     string
+}
+
+type DBConfig struct {
+	Driver string
+	Dsn    Secret
 }
 
 // Init is an exported method that takes the environment starts the viper
@@ -145,16 +155,21 @@ func generateConfig(config *viper.Viper) {
 			DonationPriceID:     config.GetString("stripe.donation_price_id"),
 		},
 		Plex: PlexConfig{
-			ClientID:        config.GetString("plex.client_id"),
-			AdminUserID:     config.GetInt("plex.admin_user_id"),
-			ProductName:     config.GetString("plex.product_name"),
-			SharedLibraries: strings.Split(config.GetString("plex.shared_libraries"), ","),
-			Token:           Secret(config.GetString("plex.token")),
-			ServerID:        config.GetString("plex.server_id"),
+			ClientID:          config.GetString("plex.client_id"),
+			AdminUserID:       config.GetInt("plex.admin_user_id"),
+			ProductName:       config.GetString("plex.product_name"),
+			SharedLibraries:   strings.Split(config.GetString("plex.shared_libraries"), ","),
+			Token:             Secret(config.GetString("plex.token")),
+			Url:               config.GetString("plex.url"),
+			MachineIdentifier: config.GetString("plex.machine_identifier"),
 		},
 		Proxy: ProxyConfig{
 			Enabled: config.GetBool("proxy.enabled"),
 			Url:     config.GetString("proxy.url"),
+		},
+		DB: DBConfig{
+			Driver: config.GetString("database.driver"),
+			Dsn:    Secret(config.GetString("database.dsn")),
 		},
 	}
 	if C.Debug {

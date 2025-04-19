@@ -2,7 +2,12 @@ module plefi
 
 go 1.24
 
-require gorm.io/driver/postgres v1.5.11
+require (
+	github.com/lib/pq v1.10.9
+	github.com/mattn/go-sqlite3 v1.14.28
+	github.com/stripe/stripe-go/v82 v82.0.0
+	gorm.io/driver/postgres v1.5.11
+)
 
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect
@@ -51,7 +56,6 @@ require (
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
-	github.com/stripe/stripe-go/v82 v82.0.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect

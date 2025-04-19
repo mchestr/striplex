@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"plefi/internal/config"
+	"plefi/internal/db"
 	"plefi/internal/server"
 	"plefi/internal/services"
 	"syscall"
@@ -70,6 +71,15 @@ func initApp(environment string) (*server.Server, error) {
 			"plex_admin_user_id", config.C.Plex.AdminUserID,
 			"plex_username", plexUser.Username)
 	}
+	if config.C.Plex.MachineIdentifier == "" {
+		machineID, err := svcs.Plex.GetMachineIdentity(context.Background(), config.C.Plex.Url, config.C.Plex.Token.Value())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Plex machine identifier: %w", err)
+		}
+		config.C.Plex.MachineIdentifier = machineID
+		slog.Info("Plex machine identifier set in config",
+			"plex_machine_identifier", config.C.Plex.MachineIdentifier)
+	}
 
 	// Set Stripe API key
 	stripe.Key = config.C.Stripe.SecretKey.Value()
@@ -77,6 +87,19 @@ func initApp(environment string) (*server.Server, error) {
 		return nil, fmt.Errorf("stripe API key not configured")
 	}
 	stripe.SetHTTPClient(httpClient)
+
+	slog.Info("Initializing database connection",
+		"driver", config.C.DB.Driver,
+		"dsn", config.C.DB.Dsn)
+	// Initialize database connection
+	if err := db.Init(config.C.DB.Driver, config.C.DB.Dsn.Value()); err != nil {
+		slog.Error("db open: %v", err)
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	if err := db.DB.Migrate(context.Background()); err != nil {
+		slog.Error("db migrate: %v", err)
+		return nil, fmt.Errorf("failed to migrate database: %w", err)
+	}
 
 	// Initialize server components
 	srv, err := server.Init(svcs, httpClient)
