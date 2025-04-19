@@ -93,11 +93,11 @@ func initApp(environment string) (*server.Server, error) {
 		"dsn", config.C.DB.Dsn)
 	// Initialize database connection
 	if err := db.Init(config.C.DB.Driver, config.C.DB.Dsn.Value()); err != nil {
-		slog.Error("db open: %v", err)
+		slog.Error("db failed to open", "error", err)
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 	if err := db.DB.Migrate(context.Background()); err != nil {
-		slog.Error("db migrate: %v", err)
+		slog.Error("db failed to migrate", "error", err)
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
