@@ -33,12 +33,12 @@ func AnonymousHandler(handler UserHandlerFunc) echo.HandlerFunc {
 		// Get user info from the session
 		userInfo, err := utils.GetSessionData(c, utils.UserInfoState)
 		if err != nil || userInfo == nil {
-			slog.Error("Failed to get user info", "error", err)
+			slog.Warn("Failed to get user info", "error", err)
 			return handler(c, nil)
 		}
 		userInfoData, ok := userInfo.(*models.UserInfo)
 		if !ok {
-			slog.Error("Failed to cast user info to UserInfo type")
+			slog.Warn("Failed to cast user info to UserInfo type")
 			return handler(c, nil)
 		}
 		return handler(c, userInfoData)
