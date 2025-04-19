@@ -2,8 +2,8 @@ package v1controller
 
 import (
 	"net/http"
-	"plefi/api/models"
-	"plefi/api/utils"
+	"plefi/internal/models"
+	"plefi/internal/utils"
 
 	"log/slog"
 

@@ -78,7 +78,7 @@ func Init(env string) error {
 
 	// Merge the environment configuration file
 	defaultFileConfig := viper.New()
-	defaultFileConfig.AddConfigPath("api/config/")
+	defaultFileConfig.AddConfigPath("internal/config/")
 	defaultFileConfig.SetConfigName("default")
 	if err = defaultFileConfig.ReadInConfig(); err != nil {
 		slog.Warn("error on parsing default configuration file", "error", err)

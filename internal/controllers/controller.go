@@ -2,15 +2,15 @@ package controllers
 
 import (
 	"net/http"
-	"plefi/api/config"
-	"plefi/api/services"
 
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 
-	apicontroller "plefi/api/controllers/api"
-	plexcontroller "plefi/api/controllers/plex"
-	stripecontroller "plefi/api/controllers/stripe"
+	"plefi/internal/config"
+	apicontroller "plefi/internal/controllers/api"
+	plexcontroller "plefi/internal/controllers/plex"
+	stripecontroller "plefi/internal/controllers/stripe"
+	"plefi/internal/services"
 )
 
 type AppController struct {

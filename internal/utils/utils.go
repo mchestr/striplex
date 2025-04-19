@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/gob"
-	"plefi/api/models"
+	"plefi/internal/models"
 )
 
 // Register concrete types stored in session (for securecookie/gob)

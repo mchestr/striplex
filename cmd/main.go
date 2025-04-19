@@ -10,12 +10,11 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"plefi/internal/config"
+	"plefi/internal/server"
+	"plefi/internal/services"
 	"syscall"
 	"time"
-
-	"plefi/api/config"
-	"plefi/api/server"
-	"plefi/api/services"
 
 	"github.com/stripe/stripe-go/v82"
 )

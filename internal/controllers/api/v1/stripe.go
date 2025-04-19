@@ -7,9 +7,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"plefi/api/config"
-	"plefi/api/models"
-	"plefi/api/utils"
+	"plefi/internal/config"
+	"plefi/internal/models"
+	"plefi/internal/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v82"
@@ -74,7 +74,9 @@ func (h *V1) GetSubscriptions(c echo.Context) error {
 	}
 
 	subscriptions := make([]models.SubscriptionSummary, 0)
-	subscriptions = append(subscriptions, *subscription)
+	if subscription != nil {
+		subscriptions = append(subscriptions, *subscription)
+	}
 	// Return subscriptions data
 	c.JSON(http.StatusOK, map[string]any{
 		"status":        "success",

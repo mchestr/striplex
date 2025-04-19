@@ -56,7 +56,7 @@ PleFi is a service that integrates Stripe payment processing with Plex media ser
 
 ```sh
 plefi
-├── api/                     # Backend application code
+├── internal/                # Backend application code
 │   ├── config/              # Configuration files and setup
 │   │   ├── config.go
 │   │   ├── default.yaml
@@ -80,7 +80,6 @@ plefi
 │   │   └── stripe_cancel.tmpl
 │   ├── router.go            # Route definitions
 │   └── main.go              # Application entry point
-├── server.go                # Server initialization with graceful shutdown
 ├── go.mod                   # Go module definition
 ├── go.sum                   # Go dependency checksums
 ├── Dockerfile               # Container definition

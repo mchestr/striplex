@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"plefi/api/config"
-	"plefi/api/models"
+	"plefi/internal/config"
+	"plefi/internal/models"
 	"strconv"
 	"time"
 

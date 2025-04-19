@@ -2,7 +2,7 @@ package v1controller
 
 import (
 	"net/http"
-	"plefi/api/services"
+	"plefi/internal/services"
 
 	"github.com/labstack/echo/v4"
 )

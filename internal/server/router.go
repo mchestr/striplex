@@ -2,9 +2,9 @@ package server
 
 import (
 	"net/http"
-	"plefi/api/config"
-	"plefi/api/controllers"
-	"plefi/api/services"
+	"plefi/internal/config"
+	"plefi/internal/controllers"
+	"plefi/internal/services"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"

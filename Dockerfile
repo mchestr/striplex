@@ -1,11 +1,11 @@
 # Multi-stage build for both frontend and backend
 FROM node:22-slim AS frontend-builder
 
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
+WORKDIR /app/web
+COPY web/package*.json ./
 RUN npm ci
 
-COPY frontend/ ./
+COPY web/ ./
 RUN npm run build
 
 FROM golang:1.24-bookworm AS backend-builder
@@ -17,7 +17,7 @@ COPY . .
 RUN go mod download
 RUN go mod verify
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /main .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /main ./cmd/main.go
 
 FROM gcr.io/distroless/static-debian11
 
@@ -29,6 +29,6 @@ ENV GIN_MODE=release \
 COPY --from=backend-builder /main .
 
 # Copy the built frontend assets to the static directory
-COPY --from=frontend-builder /app/frontend/build /static
+COPY --from=frontend-builder /app/web/build /static
 
 CMD ["./main"]

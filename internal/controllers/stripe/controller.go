@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"plefi/api/models"
-	"plefi/api/services"
-	"plefi/api/utils"
+	"plefi/internal/models"
+	"plefi/internal/services"
+	"plefi/internal/utils"
 	"time"
 
 	"github.com/labstack/echo/v4"

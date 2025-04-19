@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"net/http"
-	"plefi/api/config"
-	"plefi/api/services"
+	"plefi/internal/config"
+	"plefi/internal/services"
 )
 
 // Server holds the HTTP server and router instances

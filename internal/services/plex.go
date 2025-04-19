@@ -10,8 +10,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"plefi/api/config"
-	"plefi/api/models"
+	"plefi/internal/config"
+	"plefi/internal/models"
 	"strings"
 )
 

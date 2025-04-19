@@ -3,9 +3,9 @@ package v1controller
 import (
 	"log/slog"
 	"net/http"
-	"plefi/api/config"
-	"plefi/api/models"
-	"plefi/api/utils"
+	"plefi/internal/config"
+	"plefi/internal/models"
+	"plefi/internal/utils"
 
 	"github.com/labstack/echo/v4"
 )

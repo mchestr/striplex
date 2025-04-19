@@ -2,8 +2,8 @@ package apicontroller
 
 import (
 	"net/http"
-	v1Controller "plefi/api/controllers/api/v1"
-	"plefi/api/services"
+	v1Controller "plefi/internal/controllers/api/v1"
+	"plefi/internal/services"
 
 	"github.com/labstack/echo/v4"
 )
