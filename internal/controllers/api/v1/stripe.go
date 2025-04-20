@@ -48,7 +48,10 @@ func (h *V1) Webhook(c echo.Context) error {
 			"event_id", event.ID)
 		return err
 	}
-	c.JSON(http.StatusOK, map[string]any{"status": "success"})
+	c.JSON(http.StatusOK, models.BaseResponse{
+		Status:  "success",
+		Message: "Webhook event processed successfully",
+	})
 	return nil
 }
 
@@ -56,19 +59,27 @@ func (h *V1) Webhook(c echo.Context) error {
 func (h *V1) GetSubscriptions(c echo.Context, user *models.UserInfo) error {
 	subscription, err := h.services.Stripe.GetActiveSubscription(c.Request().Context(), user)
 	if err != nil {
-		slog.Error("Failed to retrieve subscriptions",
+		slog.Error("Failed to retrieve active subscription",
 			"error", err,
 			"user_id", user.ID)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve active subscription")
+	}
+	subscriptions := make([]models.SubscriptionSummary, 0)
+	if subscription == nil {
+		return c.JSON(http.StatusOK, models.GetSubscriptionsResponse{
+			BaseResponse: models.BaseResponse{
+				Status: "success",
+			},
+			Subscriptions: subscriptions,
+		})
 	}
 
-	subscriptions := make([]models.SubscriptionSummary, 0)
-	if subscription != nil {
-		subscriptions = append(subscriptions, *subscription)
-	}
 	// Return subscriptions data
-	c.JSON(http.StatusOK, map[string]any{
-		"status":        "success",
-		"subscriptions": subscriptions,
+	c.JSON(http.StatusOK, models.GetSubscriptionsResponse{
+		BaseResponse: models.BaseResponse{
+			Status: "success",
+		},
+		Subscriptions: append(subscriptions, *subscription),
 	})
 	return nil
 }
@@ -83,7 +94,7 @@ func (h *V1) CancelUserSubscription(c echo.Context, user *models.UserInfo) error
 	// Parse request body to get subscription ID
 	var reqBody CancelSubscriptionRequest
 	if err := c.Bind(&reqBody); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
 	subscription, err := h.services.Stripe.GetSubscription(c.Request().Context(), user, reqBody.SubscriptionID)
@@ -92,7 +103,7 @@ func (h *V1) CancelUserSubscription(c echo.Context, user *models.UserInfo) error
 			"error", err,
 			"subscription_id", reqBody.SubscriptionID,
 			"user_id", user.ID)
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve subscription")
 	}
 
 	// Cancel the specific subscription
@@ -102,7 +113,7 @@ func (h *V1) CancelUserSubscription(c echo.Context, user *models.UserInfo) error
 			"error", err,
 			"subscription_id", reqBody.SubscriptionID,
 			"user_id", user.ID)
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to cancel subscription")
 	}
 
 	slog.Info("Subscription canceled",

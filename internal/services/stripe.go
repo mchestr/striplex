@@ -229,7 +229,7 @@ func (s *StripeService) GetActiveSubscription(ctx context.Context, user *models.
 		return nil, err
 	}
 	if customer == nil {
-		return nil, fmt.Errorf("customer not found")
+		return nil, nil
 	}
 
 	iter := subscription.List(&stripe.SubscriptionListParams{
