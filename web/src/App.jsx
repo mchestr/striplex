@@ -7,7 +7,6 @@ import LoginSuccessPage from './pages/LoginSuccessPage';
 import StripeSuccessPage from './pages/StripeSuccessPage';
 import StripeCancelPage from './pages/StripeCancelPage';
 import StripeDonationSuccessPage from './pages/StripeDonationSuccessPage';
-import StripeCancelPage from './pages/StripeCancelPage';
 import ClaimCodePage from './pages/ClaimCodePage';
 // Replace static imports with lazy loaded components
 const LoginPage = lazy(() => import('./pages/LoginPage'));
