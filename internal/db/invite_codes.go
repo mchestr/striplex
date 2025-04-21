@@ -23,7 +23,7 @@ func (db *sqlDB) SaveInviteCode(ctx context.Context, inviteCode models.InviteCod
 }
 
 // GetInviteCodeByCode retrieves an invite code by its code value
-func (db *sqlDB) GetInviteCodeByCode(ctx context.Context, code string) (*models.InviteCode, error) {
+func (db *sqlDB) GetInviteCode(ctx context.Context, id int) (*models.InviteCode, error) {
 	inviteCode := &models.InviteCode{}
 
 	err := db.conn.QueryRowContext(ctx, `
@@ -31,8 +31,8 @@ func (db *sqlDB) GetInviteCodeByCode(ctx context.Context, code string) (*models.
 		       expires_at, max_uses, used_count, is_disabled, 
 		       entitlement_name, duration
 		FROM invite_codes
-		WHERE code = $1
-	`, code).Scan(
+		WHERE id = $1
+	`, id).Scan(
 		&inviteCode.ID, &inviteCode.Code,
 		&inviteCode.CreatedAt, &inviteCode.UpdatedAt, &inviteCode.ExpiresAt,
 		&inviteCode.MaxUses, &inviteCode.UsedCount, &inviteCode.IsDisabled,

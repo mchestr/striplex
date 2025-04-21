@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import LoginSuccessPage from './pages/LoginSuccessPage';
 import HomePage from './pages/HomePage';
@@ -13,7 +13,7 @@ import AdminRoute from './components/AdminRoute';
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -26,14 +26,14 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
-          
-          {/* Admin routes */}
-          <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<AdminDashboardPage />} />
-          </Route>
+        </Route>
+        
+        {/* Admin routes */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin/*" element={<AdminDashboardPage />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

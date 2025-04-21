@@ -39,6 +39,13 @@ type DeleteInviteCodeResponse struct {
 	models.BaseResponse
 }
 
+// GetInviteCodeUsersResponse represents the response for getting users of an invite code
+type GetInviteCodeResponse struct {
+	models.BaseResponse
+	models.InviteCode
+	Users []models.PlexUser `json:"users"`
+}
+
 // generateRandomCode creates a random invite code of specified length
 func generateRandomCode(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -99,6 +106,39 @@ func (h *V1) CreateInviteCode(c echo.Context) error {
 			Message: "Invite code created successfully",
 		},
 		InviteCode: inviteCode,
+	})
+}
+
+// GetInviteCodeUsers retrieves all Plex users who have used a specific invite code
+func (h *V1) GetInviteCode(c echo.Context) error {
+	// Get code ID from path parameter
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid invite code ID")
+	}
+
+	code, err := db.DB.GetInviteCode(c.Request().Context(), id)
+	if err != nil || code == nil {
+		slog.Error("Failed to get invite code", "error", err, "code_id", id)
+		return echo.NewHTTPError(http.StatusNotFound, "code not found")
+	}
+
+	// Get users who have used this invite code from database
+	users, err := db.DB.GetUsersWithActiveInviteCode(c.Request().Context(), id)
+	if err != nil {
+		slog.Error("Failed to get users for invite code", "error", err, "code_id", id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to retrieve users for invite code")
+	}
+
+	// Return success response
+	return c.JSON(http.StatusOK, GetInviteCodeResponse{
+		BaseResponse: models.BaseResponse{
+			Status:  "success",
+			Message: "code retrieved successfully",
+		},
+		InviteCode: *code,
+		Users:      users,
 	})
 }
 

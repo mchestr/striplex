@@ -47,6 +47,7 @@ func (v *V1) GetRoutes(r *echo.Group) {
 	{
 		codes.POST("", v.CreateInviteCode)
 		codes.GET("", v.ListInviteCodes)
-		codes.DELETE("/:id", v.DeleteInviteCode)
+		codes.GET("/:id", v.GetInviteCode)
+		codes.DELETE("/:code", v.DeleteInviteCode)
 	}
 }

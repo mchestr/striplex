@@ -19,7 +19,7 @@ type Database interface {
 
 	// Invite Code operations
 	SaveInviteCode(ctx context.Context, inviteCode models.InviteCode) (int, error)
-	GetInviteCodeByCode(ctx context.Context, code string) (*models.InviteCode, error)
+	GetInviteCode(ctx context.Context, id int) (*models.InviteCode, error)
 	UpdateInviteCodeUsage(ctx context.Context, codeID int) error
 	ListActiveInviteCodes(ctx context.Context) ([]models.InviteCode, error)
 
