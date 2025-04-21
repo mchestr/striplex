@@ -14,13 +14,7 @@ func (h *V1) GetCurrentUser(c echo.Context, user *models.UserInfo) error {
 		BaseResponse: models.BaseResponse{
 			Status: "success",
 		},
-		User: models.UserInfo{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-			UUID:     user.UUID,
-			IsAdmin:  user.IsAdmin,
-		},
+		User: user,
 	})
 	return nil
 }

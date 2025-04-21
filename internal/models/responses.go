@@ -17,5 +17,5 @@ type GetSubscriptionsResponse struct {
 
 type GetCurrentUserResponse struct {
 	BaseResponse
-	User UserInfo `json:"user"`
+	User *UserInfo `json:"user"`
 }

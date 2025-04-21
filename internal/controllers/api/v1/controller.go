@@ -2,6 +2,7 @@ package v1controller
 
 import (
 	"net/http"
+	"plefi/internal/config"
 	"plefi/internal/middleware"
 	"plefi/internal/services"
 
@@ -38,5 +39,14 @@ func (v *V1) GetRoutes(r *echo.Group) {
 	plex := r.Group("/plex")
 	{
 		plex.GET("/check-access", middleware.UserHandler(v.CheckServerAccess))
+	}
+
+	// Add new routes for invite code management
+	codes := r.Group("/codes")
+	codes.Use(middleware.NewAdminMiddleware(config.C.Plex.AdminUserID))
+	{
+		codes.POST("", v.CreateInviteCode)
+		codes.GET("", v.ListInviteCodes)
+		codes.DELETE("/:id", v.DeleteInviteCode)
 	}
 }

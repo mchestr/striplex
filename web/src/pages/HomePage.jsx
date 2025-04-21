@@ -88,9 +88,10 @@ function HomePage() {
         {/* Admin banner along the bottom */}
         {hasAdmin && (
           <a
+            href="/admin"
             className="absolute bottom-0 left-0 right-0 bg-red-600/80 text-white py-2 text-center font-bold text-sm rounded-b-xl hover:bg-red-700/80 transition-colors duration-200"
           >
-            Admin
+            Admin Dashboard
           </a>
         )}
 

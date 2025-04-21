@@ -20,7 +20,7 @@ func NewAdminMiddleware(adminID int) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
 			}
 			userInfoData, ok := userInfo.(*models.UserInfo)
-			if !ok || userInfoData.ID == adminID {
+			if !ok || userInfoData.ID != adminID {
 				return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
 			}
 			return next(c)

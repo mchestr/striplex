@@ -8,6 +8,8 @@ import StripeSuccessPage from './pages/StripeSuccessPage';
 import StripeCancelPage from './pages/StripeCancelPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import StripeDonationSuccessPage from './pages/StripeDonationSuccessPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminRoute from './components/AdminRoute';
 
 function App() {
   return (
@@ -24,6 +26,11 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
+          
+          {/* Admin routes */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminDashboardPage />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

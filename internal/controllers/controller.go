@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/session"
@@ -50,13 +51,18 @@ func (c *AppController) GetRoutes(r *echo.Echo) {
 
 // Logout clears the user session by deleting the user_info key
 func (h AppController) Logout(c echo.Context) error {
-	defer c.Redirect(http.StatusFound, "/")
 	s, err := session.Get(config.C.Auth.SessionName, c)
 	if err != nil {
+		slog.Info("Failed to get session", "error", err)
 		return nil
 	}
 	s.Values["user_info"] = nil
-	_ = s.Save(c.Request(), c.Response())
+	err = s.Save(c.Request(), c.Response())
+	if err != nil {
+		slog.Info("Failed to save session", "error", err)
+		return nil
+	}
+	c.Redirect(http.StatusFound, "/")
 	return nil
 }
 
