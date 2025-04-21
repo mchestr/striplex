@@ -129,6 +129,17 @@ func (h *PlexController) Callback(c echo.Context) error {
 		slog.Error("Failed to clear plex auth from session", "error", err)
 		return err
 	}
+	if err := db.DB.SavePlexUser(c.Request().Context(), models.PlexUser{
+		ID:       userInfo.ID,
+		UUID:     userInfo.UUID,
+		Username: userInfo.Username,
+		Email:    userInfo.Email,
+		IsAdmin:  config.C.Plex.AdminUserID == userInfo.ID,
+	}); err != nil {
+		slog.Error("Failed to save Plex user to database", "error", err)
+		return err
+	}
+
 	if err := db.DB.SavePlexToken(c.Request().Context(), models.PlexToken{
 		UserID:      userInfo.ID,
 		AccessToken: pinStatus.AuthToken,

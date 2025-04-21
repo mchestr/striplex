@@ -1,10 +1,12 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
 	"plefi/internal/config"
 	"plefi/internal/controllers"
 	"plefi/internal/services"
+	"sort"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -39,5 +41,15 @@ func NewRouter(svcs *services.Services, client *http.Client) *echo.Echo {
 	// Initialize controllers
 	appController := controllers.NewAppController(client, svcs)
 	appController.GetRoutes(e)
+
+	// Sort routes by path before logging
+	routes := e.Routes()
+	sort.Slice(routes, func(i, j int) bool {
+		return routes[i].Path < routes[j].Path
+	})
+
+	for _, route := range routes {
+		slog.Info("Route registered", "method", route.Method, "path", route.Path)
+	}
 	return e
 }

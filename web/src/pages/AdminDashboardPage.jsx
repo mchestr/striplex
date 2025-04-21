@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import CodeListPage from '../components/admin/CodeListPage';
 import CodeDetailsPage from '../components/admin/CodeDetailsPage';
+import UserListPage from '../components/admin/UserListPage';
+import UserDetailsPage from '../components/admin/UserDetailsPage';
 
 function AdminDashboardPage() {
   const [currentSection, setCurrentSection] = useState('codes');
@@ -96,13 +98,28 @@ function AdminDashboardPage() {
     return <CodeDetailsPage codeId={id} onBack={handleBackToList} />;
   };
 
-  // User Management placeholder
-  const UserManagement = () => (
-    <div className="p-6 bg-[#2d3436] rounded-lg">
-      <h2 className="text-2xl font-bold mb-4">User Management</h2>
-      <p className="text-gray-300">User management functionality will be implemented here.</p>
-    </div>
-  );
+  // UserList component with navigation
+  const UserListWithNav = () => {
+    const navigate = useNavigate();
+    
+    const handleViewUserDetails = (userId) => {
+      navigate(`/admin/users/${userId}`);
+    };
+    
+    return <UserListPage onViewUserDetails={handleViewUserDetails} />;
+  };
+
+  // UserDetails component with navigation
+  const UserDetailsWithNav = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    
+    const handleBackToList = () => {
+      navigate('/admin/users');
+    };
+    
+    return <UserDetailsPage userId={id} onBack={handleBackToList} />;
+  };
 
   // Settings placeholder
   const Settings = () => (
@@ -169,7 +186,8 @@ function AdminDashboardPage() {
               <Route path="/" element={<Navigate to="/admin/codes" replace />} />
               <Route path="/codes" element={<CodeListWithNav />} />
               <Route path="/codes/:id" element={<CodeDetailsWithNav />} />
-              <Route path="/users" element={<UserManagement />} />
+              <Route path="/users" element={<UserListWithNav />} />
+              <Route path="/users/:id" element={<UserDetailsWithNav />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/admin/codes" replace />} />
             </Routes>

@@ -164,22 +164,43 @@ function CodeDetailsPage({ codeId, onBack }) {
         </div>
       </div>
 
-      {codeDetails.redemptions && codeDetails.redemptions.length > 0 && (
+      {codeDetails.users && codeDetails.users.length > 0 && (
         <div className="p-6 bg-[#2d3436] rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Redemption History</h2>
+          <h2 className="text-xl font-bold mb-4">Users Who Redeemed This Code</h2>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#1e272e]/50 text-left">
                 <tr className="border-b border-gray-700">
-                  <th scope="col" className="px-6 py-3 font-medium">User</th>
+                  <th scope="col" className="px-6 py-3 font-medium">Username</th>
+                  <th scope="col" className="px-6 py-3 font-medium">Email</th>
+                  <th scope="col" className="px-6 py-3 font-medium">Status</th>
                   <th scope="col" className="px-6 py-3 font-medium">Date</th>
                 </tr>
               </thead>
               <tbody>
-                {codeDetails.redemptions.map((redemption, index) => (
-                  <tr key={index} className="border-b border-gray-700">
-                    <td className="px-6 py-4">{redemption.user_name || redemption.user_id}</td>
-                    <td className="px-6 py-4">{formatDate(redemption.redeemed_at)}</td>
+                {codeDetails.users.map((user) => (
+                  <tr key={user.id} className="border-b border-gray-700">
+                    <td className="px-6 py-4">
+                      <a 
+                        href={`/admin/users/${user.id}`}
+                        className="text-blue-400 hover:text-blue-300 hover:underline"
+                      >
+                        {user.username}
+                      </a>
+                    </td>
+                    <td className="px-6 py-4">{user.email}</td>
+                    <td className="px-6 py-4">
+                      {user.is_admin ? (
+                        <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="bg-blue-900/30 text-blue-400 px-2 py-1 rounded-full text-xs">
+                          User
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">{formatDate(user.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

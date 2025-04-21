@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import StripeDonationSuccessPage from './pages/StripeDonationSuccessPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminRoute from './components/AdminRoute';
+import ClaimCodePage from './pages/ClaimCodePage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/stripe/cancel" element={<StripeCancelPage />} />
         <Route path="/stripe/success" element={<StripeSuccessPage />} />
         <Route path="/stripe/donation-success" element={<StripeDonationSuccessPage />} />
+        <Route path="/claim/*" element={<ClaimCodePage />} />
         
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>

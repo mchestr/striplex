@@ -23,6 +23,8 @@ func NewV1Controller(basePath string, client *http.Client, services *services.Se
 	}
 }
 func (v *V1) GetRoutes(r *echo.Group) {
+	adminMiddleware := middleware.NewAdminMiddleware(config.C.Plex.AdminUserID)
+
 	user := r.Group("/user")
 	{
 		user.GET("/me", middleware.AnonymousHandler(v.GetCurrentUser))
@@ -38,16 +40,24 @@ func (v *V1) GetRoutes(r *echo.Group) {
 
 	plex := r.Group("/plex")
 	{
+		admin := plex.Group("/users", adminMiddleware)
+		{
+			admin.GET("", v.GetPlexUsers)
+			admin.GET("/:id", v.GetPlexUser)
+			admin.GET("/:id/invites", v.GetPlexUserInvites)
+		}
 		plex.GET("/check-access", middleware.UserHandler(v.CheckServerAccess))
 	}
-
 	// Add new routes for invite code management
 	codes := r.Group("/codes")
-	codes.Use(middleware.NewAdminMiddleware(config.C.Plex.AdminUserID))
 	{
-		codes.POST("", v.CreateInviteCode)
-		codes.GET("", v.ListInviteCodes)
-		codes.GET("/:id", v.GetInviteCode)
-		codes.DELETE("/:code", v.DeleteInviteCode)
+		admin := codes.Group("", adminMiddleware)
+		{
+			admin.POST("", v.CreateInviteCode)
+			admin.GET("", v.ListInviteCodes)
+			admin.GET("/:id", v.GetInviteCode)
+			admin.DELETE("/:code", v.DeleteInviteCode)
+		}
+		codes.POST("/claim", middleware.UserHandler(v.ClaimInviteCode))
 	}
 }

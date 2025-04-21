@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -30,13 +32,13 @@ func (secret Secret) MarshalJSON() ([]byte, error) {
 }
 
 type AppConfig struct {
-	Auth   AuthConfig
-	Server ServerConfig
-	Stripe StripeConfig
-	Plex   PlexConfig
-	Proxy  ProxyConfig
-	DB     DBConfig
-	Debug  bool
+	Auth     AuthConfig
+	Server   ServerConfig
+	Stripe   StripeConfig
+	Plex     PlexConfig
+	Proxy    ProxyConfig
+	Database DatabaseConfig
+	Debug    bool
 }
 
 type AuthConfig struct {
@@ -76,9 +78,10 @@ type ProxyConfig struct {
 	Url     string
 }
 
-type DBConfig struct {
-	Driver string
-	Dsn    Secret
+type DatabaseConfig struct {
+	Driver         string
+	Dsn            Secret
+	MigrationsPath string
 }
 
 // Init is an exported method that takes the environment starts the viper
@@ -121,12 +124,15 @@ func Init(env string) error {
 }
 
 func setDefaults(config *viper.Viper) {
+	// Get the migrations directory path
+	_, b, _, _ := runtime.Caller(0)
 	config.SetDefault("server.address", ":8080")
 	config.SetDefault("server.mode", "release")
 	config.SetDefault("stripe.payment_method_types", []string{"card"})
 	config.SetDefault("auth.session_secret", "changeme")
 	config.SetDefault("auth.session_name", "plefi_session")
 	config.SetDefault("debug", false)
+	config.SetDefault("database.migrations_path", filepath.Join(filepath.Dir(b), "../../migrations"))
 }
 
 func generateConfig(config *viper.Viper) {
@@ -167,9 +173,10 @@ func generateConfig(config *viper.Viper) {
 			Enabled: config.GetBool("proxy.enabled"),
 			Url:     config.GetString("proxy.url"),
 		},
-		DB: DBConfig{
-			Driver: config.GetString("database.driver"),
-			Dsn:    Secret(config.GetString("database.dsn")),
+		Database: DatabaseConfig{
+			Driver:         config.GetString("database.driver"),
+			Dsn:            Secret(config.GetString("database.dsn")),
+			MigrationsPath: config.GetString("database.migrations_path"),
 		},
 	}
 	if C.Debug {

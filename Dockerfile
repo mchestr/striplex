@@ -24,9 +24,11 @@ FROM gcr.io/distroless/static-debian11
 # Set multiple environment variables in a single layer
 ENV GIN_MODE=release \
     PLEFI_SERVER__ADDRESS=0.0.0.0:8080 \
-    PLEFI_SERVER__STATIC_PATH=/static
+    PLEFI_SERVER__STATIC_PATH=/static \
+    PLEFI_DATABASE__MIGRATIONS_PATH=/migrations
 
 COPY --from=backend-builder /main .
+COPY --from=backend-builder $GOPATH/src/smallest-golang/app/migrations /migrations
 
 # Copy the built frontend assets to the static directory
 COPY --from=frontend-builder /app/web/build /static

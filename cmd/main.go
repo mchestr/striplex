@@ -89,10 +89,10 @@ func initApp(environment string) (*server.Server, error) {
 	stripe.SetHTTPClient(httpClient)
 
 	slog.Info("Initializing database connection",
-		"driver", config.C.DB.Driver,
-		"dsn", config.C.DB.Dsn)
+		"driver", config.C.Database.Driver,
+		"dsn", config.C.Database.Dsn)
 	// Initialize database connection
-	if err := db.Init(config.C.DB.Driver, config.C.DB.Dsn.Value()); err != nil {
+	if err := db.Init(config.C.Database.Driver, config.C.Database.Dsn.Value()); err != nil {
 		slog.Error("db failed to open", "error", err)
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

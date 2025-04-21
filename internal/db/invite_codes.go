@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"plefi/internal/models"
-	"time"
 )
 
 // SaveInviteCode adds a new invite code to the database
@@ -46,6 +45,30 @@ func (db *sqlDB) GetInviteCode(ctx context.Context, id int) (*models.InviteCode,
 	return inviteCode, err
 }
 
+// GetInviteCodeByCode retrieves an invite code by its code value
+func (db *sqlDB) GetInviteCodeByCode(ctx context.Context, code string) (*models.InviteCode, error) {
+	inviteCode := &models.InviteCode{}
+
+	err := db.conn.QueryRowContext(ctx, `
+		SELECT id, code, created_at, updated_at, 
+		       expires_at, max_uses, used_count, is_disabled, 
+		       entitlement_name, duration
+		FROM invite_codes
+		WHERE code = $1
+	`, code).Scan(
+		&inviteCode.ID, &inviteCode.Code,
+		&inviteCode.CreatedAt, &inviteCode.UpdatedAt, &inviteCode.ExpiresAt,
+		&inviteCode.MaxUses, &inviteCode.UsedCount, &inviteCode.IsDisabled,
+		&inviteCode.EntitlementName, &inviteCode.Duration,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	return inviteCode, err
+}
+
 // UpdateInviteCodeUsage increments the usage count for an invite code
 func (db *sqlDB) UpdateInviteCodeUsage(ctx context.Context, codeID int) error {
 	_, err := db.conn.ExecContext(ctx, `
@@ -65,8 +88,6 @@ func (db *sqlDB) ListActiveInviteCodes(ctx context.Context) ([]models.InviteCode
 		       entitlement_name, duration
 		FROM invite_codes
 		WHERE is_disabled = FALSE
-		  AND (expires_at IS NULL OR expires_at > NOW())
-		  AND (max_uses IS NULL OR used_count < max_uses)
 		ORDER BY created_at DESC
 	`)
 
@@ -96,14 +117,13 @@ func (db *sqlDB) ListActiveInviteCodes(ctx context.Context) ([]models.InviteCode
 	return inviteCodes, nil
 }
 
-func (db *sqlDB) AssociatePlexUserWithInviteCode(ctx context.Context, userID, inviteCodeID int, expiresAt *time.Time) error {
+func (db *sqlDB) AssociatePlexUserWithInviteCode(ctx context.Context, userID, inviteCodeID int) error {
 	_, err := db.conn.ExecContext(ctx, `
-    INSERT INTO plex_user_invites(user_id, invite_code_id, expires_at)
-    VALUES($1, $2, $3)
+    INSERT INTO plex_user_invites(user_id, invite_code_id)
+    VALUES($1, $2)
     ON CONFLICT(user_id, invite_code_id) DO UPDATE SET 
-        used_at = CURRENT_TIMESTAMP,
-        expires_at = EXCLUDED.expires_at;`,
-		userID, inviteCodeID, expiresAt,
+        used_at = CURRENT_TIMESTAMP;`,
+		userID, inviteCodeID,
 	)
 	return err
 }

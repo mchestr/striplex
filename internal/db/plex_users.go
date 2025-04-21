@@ -52,3 +52,29 @@ func (db *sqlDB) GetPlexUserByEmail(ctx context.Context, email string) (*models.
 	}
 	return user, err
 }
+
+func (db *sqlDB) GetAllPlexUsers(ctx context.Context) ([]models.PlexUser, error) {
+	rows, err := db.conn.QueryContext(ctx, `
+        SELECT id, uuid, username, email, is_admin, created_at, updated_at
+        FROM plex_users
+        ORDER BY username ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.PlexUser
+	for rows.Next() {
+		var user models.PlexUser
+		err := rows.Scan(
+			&user.ID, &user.UUID, &user.Username, &user.Email,
+			&user.IsAdmin, &user.CreatedAt, &user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, rows.Err()
+}
