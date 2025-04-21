@@ -56,7 +56,7 @@ func (v *V1) GetRoutes(r *echo.Group) {
 			admin.POST("", v.CreateInviteCode)
 			admin.GET("", v.ListInviteCodes)
 			admin.GET("/:id", v.GetInviteCode)
-			admin.DELETE("/:code", v.DeleteInviteCode)
+			admin.DELETE("/:id", v.DeleteInviteCode)
 		}
 		codes.POST("/claim", middleware.UserHandler(v.ClaimInviteCode))
 	}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function CodeListPage({ onViewCodeDetails }) {
@@ -8,6 +8,7 @@ function CodeListPage({ onViewCodeDetails }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [codeToDelete, setCodeToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState(null); // New state for delete errors
   const [newCodeDuration, setNewCodeDuration] = useState("unlimited");
   const [newCodeMaxUses, setNewCodeMaxUses] = useState(1);
   const [createError, setCreateError] = useState(null);
@@ -18,7 +19,9 @@ function CodeListPage({ onViewCodeDetails }) {
   const [newCodeExpirationDate, setNewCodeExpirationDate] = useState("");
   const [expirationOption, setExpirationOption] = useState("never");
   const [durationOption, setDurationOption] = useState("never");
+  const customCodeInputRef = useRef(null); // Ref for the custom code input
   const navigate = useNavigate();
+
   useEffect(() => {
     fetchInviteCodes();
   }, []);
@@ -86,9 +89,16 @@ function CodeListPage({ onViewCodeDetails }) {
     setCreateSuccess(false);
     
     try {
+      const currentCustomCodeValue = customCodeInputRef.current ? customCodeInputRef.current.value : "";
+      
       let payload = {
         max_uses: parseInt(newCodeMaxUses, 10),
       };
+      
+      if (currentCustomCodeValue.trim()) {
+        payload.code = currentCustomCodeValue.trim();
+      }
+      
       const duration = durationOption === "custom" ? newCodeDurationDate : calculateDate(durationOption)
       const expiration = expirationOption === "custom" ? newCodeExpirationDate : calculateDate(expirationOption);
       if (duration) {
@@ -114,6 +124,9 @@ function CodeListPage({ onViewCodeDetails }) {
       setShowCreateModal(false);
       setExpirationOption("never");
       setDurationOption("never");
+      if (customCodeInputRef.current) {
+        customCodeInputRef.current.value = "";
+      }
     } catch (error) {
       console.error('Error creating invite code:', error);
       setCreateError(error.message);
@@ -122,6 +135,7 @@ function CodeListPage({ onViewCodeDetails }) {
 
   const handleDeleteCode = (codeId) => {
     setCodeToDelete(codeId);
+    setDeleteError(null); // Clear any previous error
     setShowDeleteModal(true);
   };
   
@@ -136,13 +150,13 @@ function CodeListPage({ onViewCodeDetails }) {
       }
       
       setInviteCodes(inviteCodes.filter(code => code.id !== codeToDelete));
+      setShowDeleteModal(false);
+      setCodeToDelete(null);
       
     } catch (error) {
       console.error('Error deleting invite code:', error);
-      alert(`Failed to delete invite code: ${error.message}`);
-    } finally {
-      setShowDeleteModal(false);
-      setCodeToDelete(null);
+      // Set error in state instead of showing alert
+      setDeleteError(error.message);
     }
   };
 
@@ -166,7 +180,12 @@ function CodeListPage({ onViewCodeDetails }) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold">Create New Invite Code</h3>
           <button 
-            onClick={() => setShowCreateModal(false)}
+            onClick={() => {
+              setShowCreateModal(false);
+              if (customCodeInputRef.current) {
+                customCodeInputRef.current.value = "";
+              }
+            }}
             className="text-gray-400 hover:text-white"
           >
             ✕
@@ -247,6 +266,18 @@ function CodeListPage({ onViewCodeDetails }) {
             
             {showAdvancedOptions && (
               <div className="mt-3 p-3 bg-[#1e272e]/30 border border-gray-700 rounded-lg">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Custom Code Value</label>
+                  <input
+                    type="text"
+                    defaultValue=""
+                    placeholder="Leave empty for auto-generated code"
+                    className="w-full p-2.5 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
+                    ref={customCodeInputRef}
+                  />
+                  <p className="mt-1 text-xs text-gray-400">Specify a custom code or leave blank to auto-generate one</p>
+                </div>
+
                 <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Duration</label>
                 <select
@@ -281,7 +312,12 @@ function CodeListPage({ onViewCodeDetails }) {
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => setShowCreateModal(false)}
+              onClick={() => {
+                setShowCreateModal(false);
+                if (customCodeInputRef.current) {
+                  customCodeInputRef.current.value = "";
+                }
+              }}
               className="mr-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
             >
               Cancel
@@ -304,12 +340,21 @@ function CodeListPage({ onViewCodeDetails }) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold">Delete Invite Code</h3>
           <button 
-            onClick={() => setShowDeleteModal(false)}
+            onClick={() => {
+              setShowDeleteModal(false);
+              setDeleteError(null);
+            }}
             className="text-gray-400 hover:text-white"
           >
             ✕
           </button>
         </div>
+        
+        {deleteError && (
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200">
+            {deleteError}
+          </div>
+        )}
         
         <p className="mb-6 text-gray-300">
           Are you sure you want to delete this invite code? This action cannot be undone.
@@ -317,7 +362,10 @@ function CodeListPage({ onViewCodeDetails }) {
         
         <div className="flex justify-end">
           <button
-            onClick={() => setShowDeleteModal(false)}
+            onClick={() => {
+              setShowDeleteModal(false);
+              setDeleteError(null);
+            }}
             className="mr-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
           >
             Cancel
