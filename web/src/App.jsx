@@ -3,15 +3,16 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
-import LoginSuccessPage from './pages/LoginSuccessPage';
-import StripeSuccessPage from './pages/StripeSuccessPage';
-import StripeCancelPage from './pages/StripeCancelPage';
-import StripeDonationSuccessPage from './pages/StripeDonationSuccessPage';
-import ClaimCodePage from './pages/ClaimCodePage';
 // Replace static imports with lazy loaded components
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const LoginSuccessPage = lazy(() => import('./pages/LoginSuccessPage'));
 const HomePage = lazy(() => import('./pages/HomePage'));
+const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'));
+const StripeSuccessPage = lazy(() => import('./pages/StripeSuccessPage'));
+const StripeCancelPage = lazy(() => import('./pages/StripeCancelPage'));
+const StripeDonationSuccessPage = lazy(() => import('./pages/StripeDonationSuccessPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const ClaimCodePage = lazy(() => import('./pages/ClaimCodePage'));
 
 // Loading component for Suspense fallback
 const LoadingComponent = () => (
@@ -26,17 +27,17 @@ function App() {
       <Suspense fallback={<LoadingComponent />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/login/success" element={<LoginSuccessPage />} />
-          <Route path="/claim" element={<ClaimCodePage />} />
+          <Route path="/login-success" element={<LoginSuccessPage />} />
+          <Route path="/claim/*" element={<ClaimCodePage />} />
           <Route path="/stripe/success" element={<StripeSuccessPage />} />
           <Route path="/stripe/cancel" element={<StripeCancelPage />} />
-          <Route path="/stripe/donation/success" element={<StripeDonationSuccessPage />} />
-          
+          <Route path="/stripe/donation-success" element={<StripeDonationSuccessPage />} />
+
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
           </Route>
-          
+
           <Route element={<AdminRoute />}>
             <Route path="/admin/*" element={<AdminDashboardPage />} />
           </Route>
