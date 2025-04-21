@@ -12,7 +12,7 @@ ENV NODE_ENV=production \
 
 COPY web/ ./
 # Use more aggressive optimization for production build
-RUN npm run build -- --profile --no-progress --max-old-space-size=4096
+RUN npm run build
 
 FROM golang:1.24-bookworm AS backend-builder
 

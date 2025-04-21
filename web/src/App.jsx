@@ -1,40 +1,48 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import LoginSuccessPage from './pages/LoginSuccessPage';
-import HomePage from './pages/HomePage';
-import SubscriptionsPage from './pages/SubscriptionsPage';
-import StripeSuccessPage from './pages/StripeSuccessPage';
-import StripeCancelPage from './pages/StripeCancelPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import StripeDonationSuccessPage from './pages/StripeDonationSuccessPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminRoute from './components/AdminRoute';
-import ClaimCodePage from './pages/ClaimCodePage';
+
+// Replace static imports with lazy loaded components
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const LoginSuccessPage = lazy(() => import('./pages/LoginSuccessPage'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'));
+const StripeSuccessPage = lazy(() => import('./pages/StripeSuccessPage'));
+const StripeCancelPage = lazy(() => import('./pages/StripeCancelPage'));
+const StripeDonationSuccessPage = lazy(() => import('./pages/StripeDonationSuccessPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const ClaimCodePage = lazy(() => import('./pages/ClaimCodePage'));
+
+// Loading component for Suspense fallback
+const LoadingComponent = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+);
 
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/login-success" element={<LoginSuccessPage />} />
-        <Route path="/stripe/cancel" element={<StripeCancelPage />} />
-        <Route path="/stripe/success" element={<StripeSuccessPage />} />
-        <Route path="/stripe/donation-success" element={<StripeDonationSuccessPage />} />
-        <Route path="/claim/*" element={<ClaimCodePage />} />
-        
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/subscriptions" element={<SubscriptionsPage />} />
-        </Route>
-        
-        {/* Admin routes */}
-        <Route element={<AdminRoute />}>
-          <Route path="/admin/*" element={<AdminDashboardPage />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<LoadingComponent />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login/success" element={<LoginSuccessPage />} />
+          <Route path="/claim" element={<ClaimCodePage />} />
+          <Route path="/stripe/success" element={<StripeSuccessPage />} />
+          <Route path="/stripe/cancel" element={<StripeCancelPage />} />
+          <Route path="/stripe/donation/success" element={<StripeDonationSuccessPage />} />
+          
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/subscriptions" element={<SubscriptionsPage />} />
+          </Route>
+          
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/*" element={<AdminDashboardPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
