@@ -165,7 +165,6 @@ func (db *sqlDB) GetUsersWithActiveInviteCode(ctx context.Context, inviteCodeID 
         FROM plex_users u
         JOIN plex_user_invites pui ON u.id = pui.user_id
         WHERE pui.invite_code_id = $1
-          AND (pui.expires_at IS NULL OR pui.expires_at > CURRENT_TIMESTAMP)
         ORDER BY u.username ASC`,
 		inviteCodeID)
 
