@@ -6,6 +6,7 @@ function HomePage() {
   const [hasPlexAccess, setHasPlexAccess] = useState(null);
   const [hasSubscriptions, setHasSubscriptions] = useState(false);
   const [hasAdmin, setHasAdmin] = useState(false);
+  const [serverName, setServerName] = useState("PleFi");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +40,19 @@ function HomePage() {
           setHasAdmin(meData.user?.is_admin || false);
         } else {
           setHasAdmin(false);
+        }
+
+        // Fetch server info for name
+        try {
+          const infoResponse = await fetch("/info");
+          if (infoResponse.ok) {
+            const infoData = await infoResponse.json();
+            if (infoData.server_name) {
+              setServerName(infoData.server_name);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching server info:", error);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -101,7 +115,7 @@ function HomePage() {
         )}
 
         <h1 className="text-4xl md:text-[3.5rem] font-extrabold mb-6 tracking-tight text-[#f1f2f6] leading-tight">
-          PleFi
+          {serverName}
         </h1>
 
         <div className="mb-6 text-blue-400">
