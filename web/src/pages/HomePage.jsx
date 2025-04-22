@@ -149,6 +149,15 @@ function HomePage() {
         </p>
 
         <div className="space-y-4 mb-6">
+          {hasPlexAccess && (
+            <button
+              onClick={() => navigate("/onboarding")}
+              className="w-full flex items-center justify-center bg-[#27ae60] hover:bg-[#2ecc71] text-white font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
+            >
+              Onboarding Guide
+            </button>
+          )}
+          
           {hasSubscriptions ? (
             // Show subscription management button for users with subscriptions
             <button
