@@ -45,10 +45,10 @@ function StripeSuccessPage() {
 
         <div className="flex flex-wrap justify-center gap-4 mt-8">
           <button 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/onboarding')}
             className="px-7 py-3 bg-[#4b6bfb] hover:bg-[#3557fa] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
           >
-            Return Home
+            Get Started
           </button>
           
           <a 
