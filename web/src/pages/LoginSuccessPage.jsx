@@ -31,9 +31,6 @@ const LoginSuccessPage = () => {
         </div>
         <h1 className="text-3xl font-bold mb-4">Login Successful!</h1>
         <p className="text-lg mb-8">You have successfully authenticated with Plex.</p>
-        <p className="text-sm text-gray-400 mb-4">
-          This window will close in {countdown} second{countdown !== 1 ? 's' : ''}.
-        </p>
         <p className="text-sm text-gray-400 mb-6">You can now close this window and return to the application.</p>
         
         <button 
@@ -42,6 +39,10 @@ const LoginSuccessPage = () => {
         >
           Close Window
         </button>
+
+        <p className="text-sm mt-2 text-gray-400 mb-4">
+          This window will close in {countdown} second{countdown !== 1 ? 's' : ''}.
+        </p>
       </div>
     </div>
   );

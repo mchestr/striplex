@@ -132,8 +132,8 @@ func (s *StripeService) CreateSubscriptionCheckoutSession(ctx context.Context, s
 		"email", user.Email,
 		"username", user.Username)
 
-	successURL := fmt.Sprintf("https://%s/stripe/success", config.C.Server.Hostname)
-	cancelURL := fmt.Sprintf("https://%s/stripe/cancel", config.C.Server.Hostname)
+	successURL := fmt.Sprintf("https://%s/subscription-success", config.C.Server.Hostname)
+	cancelURL := fmt.Sprintf("https://%s/subscription-cancel", config.C.Server.Hostname)
 	// Create a Stripe checkout session for the customer
 	params := &stripe.CheckoutSessionParams{
 		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
@@ -171,8 +171,8 @@ func (s *StripeService) CreateOneTimeCheckoutSession(ctx context.Context, sCusto
 		slog.Info("Creating an anonymous donation checkout session")
 	}
 
-	successURL := fmt.Sprintf("https://%s/stripe/donation-success", config.C.Server.Hostname)
-	cancelURL := fmt.Sprintf("https://%s/stripe/cancel", config.C.Server.Hostname)
+	successURL := fmt.Sprintf("https://%s/donation-success", config.C.Server.Hostname)
+	cancelURL := fmt.Sprintf("https://%s/donation-cancel", config.C.Server.Hostname)
 	params := &stripe.CheckoutSessionParams{
 		PaymentMethodTypes: stripe.StringSlice(config.C.Stripe.PaymentMethodTypes),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{

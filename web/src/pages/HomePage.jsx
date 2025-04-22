@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function HomePage() {
+  const { logout, user, serverInfo } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [hasPlexAccess, setHasPlexAccess] = useState(null);
   const [hasSubscriptions, setHasSubscriptions] = useState(false);
-  const [hasAdmin, setHasAdmin] = useState(false);
-  const [serverName, setServerName] = useState("PleFi");
+  const [serverName, setServerName] = useState(serverInfo.serverName);
   const navigate = useNavigate();
+  const [hasAdmin, setHasAdmin] = useState(user.is_admin || false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -32,32 +34,8 @@ function HomePage() {
               subscriptionsData.subscriptions.length > 0
           );
         }
-
-        // Check admin via user info
-        const meResponse = await fetch("/api/v1/user/me");
-        if (meResponse.ok) {
-          const meData = await meResponse.json();
-          setHasAdmin(meData.user?.is_admin || false);
-        } else {
-          setHasAdmin(false);
-        }
-
-        // Fetch server info for name
-        try {
-          const infoResponse = await fetch("/info");
-          if (infoResponse.ok) {
-            const infoData = await infoResponse.json();
-            if (infoData.server_name) {
-              setServerName(infoData.server_name);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching server info:", error);
-        }
       } catch (error) {
-        console.error("Error fetching user data:", error);
         setHasPlexAccess(false);
-        setHasAdmin(false);
       } finally {
         setIsLoading(false);
       }
@@ -68,16 +46,8 @@ function HomePage() {
 
   const handleSignOut = async () => {
     try {
-      const response = await fetch("/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        navigate("/login");
-      } else {
-        console.error("Failed to sign out");
-      }
+      await logout(); // Use the logout function from AuthContext
+      navigate("/login");
     } catch (error) {
       console.error("Error signing out:", error);
     }

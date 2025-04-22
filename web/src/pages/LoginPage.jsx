@@ -1,52 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BuyMeCoffee from '../components/BuyMeCoffee';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [serverName, setServerName] = useState('PleFi');
   const navigate = useNavigate();
+  const { serverInfo, user, isLoading: isAuthLoading, refreshUser } = useAuth();
 
+  // Redirect if user is already authenticated
   useEffect(() => {
-    const fetchServerInfo = async () => {
-      try {
-        const response = await fetch('/info');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.server_name) {
-            setServerName(data.server_name);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching server info:', error);
-      }
-    };
-
-    fetchServerInfo();
-  }, []);
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        const response = await fetch('/api/v1/user/me');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status === 'success' && data.user) {
-            // User is authenticated, redirect to home or dashboard
-            navigate('/');
-          }
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-      } finally {
-        setIsCheckingAuth(false);
-      }
-    };
-
-    checkAuthentication();
-  }, [navigate]);
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handlePlexSignIn = async () => {
     setIsLoading(true);
@@ -77,8 +44,10 @@ const LoginPage = () => {
       const messageHandler = (event) => {
         if (event.data.type === 'PLEX_AUTH_SUCCESS') {
           window.removeEventListener('message', messageHandler);
-          // Redirect to home page after successful authentication
-          navigate('/');
+          // Refresh user data and navigate
+          refreshUser().then(() => {
+            navigate('/');
+          });
         }
       };
       window.addEventListener('message', messageHandler);
@@ -98,7 +67,7 @@ const LoginPage = () => {
     }
   };
 
-  if (isCheckingAuth) {
+  if (isAuthLoading) {
     return (
       <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen">
         <div className="text-xl">Loading...</div>
@@ -116,7 +85,7 @@ const LoginPage = () => {
           </div>
         </a>
 
-        <h1 className="text-4xl md:text-[3.5rem] font-extrabold mb-4 tracking-tight text-[#f1f2f6] leading-tight">{serverName}</h1>
+        <h1 className="text-4xl md:text-[3.5rem] font-extrabold mb-4 tracking-tight text-[#f1f2f6] leading-tight">{serverInfo.serverName}</h1>
         
         {errorMessage && (
           <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200">

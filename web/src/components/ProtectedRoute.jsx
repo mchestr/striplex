@@ -1,36 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-function ProtectedRoute() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/v1/user/me');
-        const data = await response.json();
-        setIsAuthenticated(!!data.user);
-      } catch (error) {
-        console.error('Authentication check failed:', error);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
+const ProtectedRoute = () => {
+  const { user, isLoading } = useAuth();
+  
   if (isLoading) {
     return (
-      <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen">
-        <div className="text-xl">Checking authentication...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
-
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
-}
+  return user ? <Outlet /> : <Navigate to="/login" />;
+};
 
 export default ProtectedRoute;

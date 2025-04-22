@@ -1,7 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
-const TipsAndTricksStep = ({ onComplete, onPrev, serverInfo, isLastStep }) => {
+const TipsAndTricksStep = ({ onComplete, onPrev, serverInfo }) => {
   return (
     <div className="space-y-6">
       <div className="bg-blue-500/20 border border-blue-500/50 text-blue-200 p-4 rounded-lg text-left">

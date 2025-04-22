@@ -1,36 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-function AdminRoute() {
-  const [isAdmin, setIsAdmin] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        const response = await fetch('/api/v1/user/me');
-        const data = await response.json();
-        setIsAdmin(data.user?.is_admin || false);
-      } catch (error) {
-        console.error('Admin check failed:', error);
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, []);
+const AdminRoute = () => {
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen">
-        <div className="text-xl">Checking permissions...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
-
-  return isAdmin ? <Outlet /> : <Navigate to="/" replace />;
-}
+  
+  return (user && user.is_admin) ? <Outlet /> : <Navigate to="/" />;
+};
 
 export default AdminRoute;

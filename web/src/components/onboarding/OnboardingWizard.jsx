@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import WelcomeStep from './steps/WelcomeStep';
 import RequestsGuideStep from './steps/RequestsGuideStep';
@@ -9,55 +9,7 @@ function OnboardingWizard({ initialStep = 0, serverInfo }) {
   // Get the step directly from URL params for more reliable deep linking
   const { step: urlStep } = useParams(); 
   const urlStepNumber = parseInt(urlStep) || 0;
-  
-  const [localServerInfo, setLocalServerInfo] = useState({
-    serverName: 'Plex Server',
-    requestsUrl: null,
-    discordServerUrl: null,
-    isLoading: false,
-    error: null
-  });
-  
   const navigate = useNavigate();
-  
-  // Use provided serverInfo if available, otherwise fetch it
-  useEffect(() => {
-    if (serverInfo) {
-      setLocalServerInfo({
-        serverName: serverInfo.server_name || 'Plex Server',
-        requestsUrl: serverInfo.requests_url || null,
-        discordServerUrl: serverInfo.discord_server_url || null,
-        isLoading: false,
-        error: null
-      });
-    } else {
-      const fetchServerInfo = async () => {
-        try {
-          const response = await fetch('/info');
-          if (!response.ok) {
-            throw new Error(`Failed to fetch info: ${response.status}`);
-          }
-          const data = await response.json();
-          setLocalServerInfo({
-            serverName: data.server_name || 'Plex Server',
-            requestsUrl: data.requests_url || null,
-            discordServerUrl: data.discord_server_url || null,
-            isLoading: false,
-            error: null
-          });
-        } catch (err) {
-          console.error('Error fetching server info:', err);
-          setLocalServerInfo(prevState => ({
-            ...prevState,
-            isLoading: false,
-            error: 'Failed to load server information'
-          }));
-        }
-      };
-
-      fetchServerInfo();
-    }
-  }, [serverInfo]);
   
   // Dynamically build steps based on available server info
   const steps = useMemo(() => {
@@ -66,12 +18,12 @@ function OnboardingWizard({ initialStep = 0, serverInfo }) {
     ];
     
     // Add Requests step only if requestsUrl is provided
-    if (localServerInfo.requestsUrl) {
+    if (serverInfo.requestsUrl) {
       baseSteps.push({ name: 'Request Content', component: RequestsGuideStep });
     }
     
     // Add Discord step if URL is provided
-    if (localServerInfo.discordServerUrl) {
+    if (serverInfo.discordServerUrl) {
       baseSteps.push({ name: 'Join Community', component: DiscordInviteStep });
     }
     
@@ -79,7 +31,7 @@ function OnboardingWizard({ initialStep = 0, serverInfo }) {
     baseSteps.push({ name: 'Tips & Tricks', component: TipsAndTricksStep });
     
     return baseSteps;
-  }, [localServerInfo]);
+  }, [serverInfo]);
   
   // Calculate the current step safely
   const currentStep = useMemo(() => {
@@ -155,19 +107,12 @@ function OnboardingWizard({ initialStep = 0, serverInfo }) {
         </div>
       </div>
 
-      {/* Server info error message if needed */}
-      {localServerInfo.error && (
-        <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200">
-          {localServerInfo.error} - Using default values instead.
-        </div>
-      )}
-
       {/* Step content */}
       <CurrentStepComponent 
         onNext={handleNext} 
         onPrev={handlePrev} 
         onComplete={handleComplete}
-        serverInfo={localServerInfo}
+        serverInfo={serverInfo}
         nextStepName={getNextStepName()}
         isLastStep={currentStep >= steps.length - 1}
       />

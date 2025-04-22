@@ -1,11 +1,8 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-function StripeCancelPage() {
+function StripeCancelPage({ type }) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const priceId = queryParams.get('price_id');
 
   return (
     <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen py-8 px-4">
@@ -14,10 +11,10 @@ function StripeCancelPage() {
           ✕
         </div>
 
-        <h1 className="text-4xl font-extrabold mb-4">Subscription Cancelled</h1>
+        <h1 className="text-4xl font-extrabold mb-4">{type} Cancelled</h1>
         
         <p className="text-lg mb-2 text-[#f1f2f6]">
-          Your subscription process was cancelled.
+          Your {type.toLowerCase()} process was cancelled.
         </p>
         
         <p className="text-lg mb-6 text-[#f1f2f6]">
@@ -32,12 +29,21 @@ function StripeCancelPage() {
             Return Home
           </button>
           
-          <button 
-            onClick={() => navigate(`/stripe/subscribe`)}
-            className="px-7 py-3 bg-[#ffb142] hover:bg-[#ff9f1a] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
-          >
-            Try Again
-          </button>
+          {type === "Subscription" ? (
+            <button 
+              onClick={() => window.location.href = '/stripe/subscribe'}
+              className="px-7 py-3 bg-[#ffb142] hover:bg-[#ff9f1a] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
+            >
+              Try Again
+            </button>
+          ) : (
+            <button 
+              onClick={() => window.location.href = '/stripe/donation'}
+              className="px-7 py-3 bg-[#ffb142] hover:bg-[#ff9f1a] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
+            >
+              Try Donating Again
+            </button>
+          )}
         </div>
       </div>
     </div>

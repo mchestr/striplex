@@ -1,6 +1,6 @@
 import React from 'react';
 
-const WelcomeStep = ({ onNext, serverInfo, nextStepName }) => {
+const WelcomeStep = ({ onNext, serverInfo }) => {
   // Dynamically generate the list of features based on available server info
   const getFeatureList = () => {
     const features = [];

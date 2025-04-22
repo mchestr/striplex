@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BuyMeCoffee from '../components/BuyMeCoffee';
 
 function SubscriptionsPage() {
   const [isLoading, setIsLoading] = useState(true);
