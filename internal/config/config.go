@@ -32,13 +32,14 @@ func (secret Secret) MarshalJSON() ([]byte, error) {
 }
 
 type AppConfig struct {
-	Auth     AuthConfig
-	Server   ServerConfig
-	Stripe   StripeConfig
-	Plex     PlexConfig
-	Proxy    ProxyConfig
-	Database DatabaseConfig
-	Debug    bool
+	Auth             AuthConfig
+	Server           ServerConfig
+	Stripe           StripeConfig
+	Plex             PlexConfig
+	Proxy            ProxyConfig
+	Database         DatabaseConfig
+	Debug            bool
+	OnboardingConfig OnboardingConfig
 }
 
 type AuthConfig struct {
@@ -82,6 +83,12 @@ type DatabaseConfig struct {
 	Driver         string
 	Dsn            Secret
 	MigrationsPath string
+}
+
+type OnboardingConfig struct {
+	RequestsUrl      string
+	ServerName       string
+	DiscordServerUrl string
 }
 
 // Init is an exported method that takes the environment starts the viper
@@ -177,6 +184,11 @@ func generateConfig(config *viper.Viper) {
 			Driver:         config.GetString("database.driver"),
 			Dsn:            Secret(config.GetString("database.dsn")),
 			MigrationsPath: config.GetString("database.migrations_path"),
+		},
+		OnboardingConfig: OnboardingConfig{
+			RequestsUrl:      config.GetString("onboarding.requests_url"),
+			ServerName:       config.GetString("onboarding.server_name"),
+			DiscordServerUrl: config.GetString("onboarding.discord_server_url"),
 		},
 	}
 	if C.Debug {

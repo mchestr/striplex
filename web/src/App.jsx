@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -13,6 +13,7 @@ const StripeCancelPage = lazy(() => import('./pages/StripeCancelPage'));
 const StripeDonationSuccessPage = lazy(() => import('./pages/StripeDonationSuccessPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const ClaimCodePage = lazy(() => import('./pages/ClaimCodePage'));
+const OnboardingWizardPage = lazy(() => import('./pages/OnboardingWizardPage'));
 
 // Loading component for Suspense fallback
 const LoadingComponent = () => (
@@ -28,14 +29,17 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/login-success" element={<LoginSuccessPage />} />
-          <Route path="/claim/*" element={<ClaimCodePage />} />
           <Route path="/stripe/success" element={<StripeSuccessPage />} />
           <Route path="/stripe/cancel" element={<StripeCancelPage />} />
-          <Route path="/stripe/donation-success" element={<StripeDonationSuccessPage />} />
-
+          <Route path="/stripe/donation/success" element={<StripeDonationSuccessPage />} />
+          <Route path="/onboarding" element={<Navigate to="/onboarding/step/0" replace />} />
+          <Route path="/onboarding/step/:step" element={<OnboardingWizardPage />} />
+          
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
+            <Route path="/claim" element={<ClaimCodePage />} />
+            <Route path="/claim/:code" element={<ClaimCodePage />} />
           </Route>
 
           <Route element={<AdminRoute />}>

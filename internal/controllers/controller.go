@@ -29,6 +29,7 @@ func NewAppController(client *http.Client, services *services.Services) *AppCont
 func (c *AppController) GetRoutes(r *echo.Echo) {
 	r.GET("/health", c.Health)
 	r.POST("/logout", c.Logout)
+	r.GET("/info", c.Info)
 
 	api := r.Group("/api")
 	{
@@ -69,6 +70,15 @@ func (h AppController) Logout(c echo.Context) error {
 func (h AppController) Health(c echo.Context) error {
 	c.JSON(http.StatusOK, map[string]string{
 		"status": "ok",
+	})
+	return echo.NewHTTPError(http.StatusOK, "ok")
+}
+
+func (h AppController) Info(c echo.Context) error {
+	c.JSON(http.StatusOK, InfoResponse{
+		RequestsURL:      config.C.OnboardingConfig.RequestsUrl,
+		ServerName:       config.C.OnboardingConfig.ServerName,
+		DiscordServerUrl: config.C.OnboardingConfig.DiscordServerUrl,
 	})
 	return echo.NewHTTPError(http.StatusOK, "ok")
 }

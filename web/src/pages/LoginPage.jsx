@@ -6,7 +6,26 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [serverName, setServerName] = useState('PleFi');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchServerInfo = async () => {
+      try {
+        const response = await fetch('/info');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.server_name) {
+            setServerName(data.server_name);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching server info:', error);
+      }
+    };
+
+    fetchServerInfo();
+  }, []);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -97,7 +116,7 @@ const LoginPage = () => {
           </div>
         </a>
 
-        <h1 className="text-4xl md:text-[3.5rem] font-extrabold mb-4 tracking-tight text-[#f1f2f6] leading-tight">PleFi</h1>
+        <h1 className="text-4xl md:text-[3.5rem] font-extrabold mb-4 tracking-tight text-[#f1f2f6] leading-tight">{serverName}</h1>
         
         {errorMessage && (
           <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200">
@@ -123,6 +142,9 @@ const LoginPage = () => {
           </button>
         </div>
       </div>
+      <footer className="mt-8 text-sm text-gray-400">
+        <p>Powered by <a href="https://github.com/mchestr/plefi" className="text-[#e5a00d] hover:text-[#f5b82e] underline" target="_blank" rel="noopener noreferrer">PleFi</a></p>
+      </footer>
     </div>
   );
 };

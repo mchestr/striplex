@@ -48,8 +48,8 @@ function ClaimCodePage() {
       if (response.ok) {
         setMessage('Code claimed successfully!');
         setMessageType('success');
-        // Optionally redirect after successful claim
-        setTimeout(() => navigate('/'), 2000);
+        // Redirect to the onboarding wizard after successful claim
+        setTimeout(() => navigate('/onboarding'), 2000);
       } else {
         setMessage(data.error || 'Failed to claim code');
         setMessageType('error');
