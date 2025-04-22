@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 function UserDetailsPage({ userId, onBack }) {
   const [user, setUser] = useState(null);
@@ -22,19 +22,21 @@ function UserDetailsPage({ userId, onBack }) {
       if (!userResponse.ok) {
         throw new Error(`Error fetching user: ${userResponse.statusText}`);
       }
-      
+
       const userData = await userResponse.json();
       setUser(userData.user);
-      
+
       // Fetch user's invite codes
-      const invitesResponse = await fetch(`/api/v1/plex/users/${userId}/invites`);
+      const invitesResponse = await fetch(
+        `/api/v1/plex/users/${userId}/invites`
+      );
       if (invitesResponse.ok) {
         const invitesData = await invitesResponse.json();
         setInvites(invitesData.invites || []);
       }
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching user details:', err);
+      console.error("Error fetching user details:", err);
     } finally {
       setIsLoading(false);
     }
@@ -49,8 +51,19 @@ function UserDetailsPage({ userId, onBack }) {
             onClick={onBack}
             className="text-gray-300 hover:text-white flex items-center"
           >
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            <svg
+              className="w-5 h-5 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
             </svg>
             Back to Users
           </button>
@@ -71,8 +84,19 @@ function UserDetailsPage({ userId, onBack }) {
             onClick={onBack}
             className="text-gray-300 hover:text-white flex items-center"
           >
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            <svg
+              className="w-5 h-5 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
             </svg>
             Back to Users
           </button>
@@ -93,8 +117,19 @@ function UserDetailsPage({ userId, onBack }) {
             onClick={onBack}
             className="text-gray-300 hover:text-white flex items-center"
           >
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            <svg
+              className="w-5 h-5 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
             </svg>
             Back to Users
           </button>
@@ -114,8 +149,19 @@ function UserDetailsPage({ userId, onBack }) {
           onClick={onBack}
           className="text-gray-300 hover:text-white flex items-center"
         >
-          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          <svg
+            className="w-5 h-5 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            ></path>
           </svg>
           Back to Users
         </button>
@@ -123,7 +169,9 @@ function UserDetailsPage({ userId, onBack }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-[#3a4149] p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-4 text-white">User Information</h3>
+          <h3 className="text-lg font-semibold mb-4 text-white">
+            User Information
+          </h3>
           <div className="space-y-3">
             <div>
               <p className="text-sm text-gray-400">ID</p>
@@ -145,52 +193,77 @@ function UserDetailsPage({ userId, onBack }) {
               <p className="text-sm text-gray-400">Admin Status</p>
               <p className="text-white">
                 {user.is_admin ? (
-                  <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">Admin</span>
+                  <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">
+                    Admin
+                  </span>
                 ) : (
-                  <span className="bg-gray-700/30 text-gray-400 px-2 py-1 rounded-full text-xs">User</span>
+                  <span className="bg-gray-700/30 text-gray-400 px-2 py-1 rounded-full text-xs">
+                    User
+                  </span>
                 )}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-400">Created At</p>
-              <p className="text-white">{new Date(user.created_at).toLocaleString()}</p>
+              <p className="text-white">
+                {new Date(user.created_at).toLocaleString()}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-400">Updated At</p>
-              <p className="text-white">{new Date(user.updated_at).toLocaleString()}</p>
+              <p className="text-white">
+                {new Date(user.updated_at).toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="bg-[#3a4149] p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-4 text-white">Active Invites</h3>
+          <h3 className="text-lg font-semibold mb-4 text-white">
+            Active Invites
+          </h3>
           {invites && invites.length > 0 ? (
             <div className="space-y-4">
               {invites.map((invite) => (
                 <div key={invite.id} className="bg-[#2d3436] p-4 rounded-lg">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-white font-medium">{invite.invite_code}</p>
-                      <p className="text-sm text-gray-400">Entitlement: {invite.entitlement_name}</p>
+                      <p className="text-white font-medium">
+                        {invite.invite_code}
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Entitlement: {invite.entitlement_name}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-400">Used on:</p>
-                      <p className="text-white">{new Date(invite.used_at).toLocaleDateString()}</p>
+                      <p className="text-white">
+                        {new Date(invite.used_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                   <div className="mt-2">
                     <p className="text-sm text-gray-400">
-                      Expires: {invite.expires_at ? new Date(invite.expires_at).toLocaleString() : 'Never'}
+                      Expires:{" "}
+                      {invite.expires_at
+                        ? new Date(invite.expires_at).toLocaleString()
+                        : "Never"}
                     </p>
                     <div className="mt-1">
                       {invite.expires_at ? (
                         new Date(invite.expires_at) > new Date() ? (
-                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">Active</span>
+                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">
+                            Active
+                          </span>
                         ) : (
-                          <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded-full text-xs">Expired</span>
+                          <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded-full text-xs">
+                            Expired
+                          </span>
                         )
                       ) : (
-                        <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">Permanent</span>
+                        <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">
+                          Permanent
+                        </span>
                       )}
                     </div>
                   </div>
@@ -198,7 +271,9 @@ function UserDetailsPage({ userId, onBack }) {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 text-center py-4">No active invites found</p>
+            <p className="text-gray-400 text-center py-4">
+              No active invites found
+            </p>
           )}
         </div>
       </div>
@@ -219,19 +294,25 @@ function UserDetailsPage({ userId, onBack }) {
       {isRevokeModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-[#2d3436] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-xl font-semibold mb-4 text-white">Confirm Revoke Access</h3>
-            <p className="mb-6 text-gray-300">Are you sure you want to revoke this user's Plex access?</p>
+            <h3 className="text-xl font-semibold mb-4 text-white">
+              Confirm Revoke Access
+            </h3>
+            <p className="mb-6 text-gray-300">
+              Are you sure you want to revoke this user's Plex access?
+            </p>
             <div className="flex justify-end space-x-3">
-              <button 
+              <button
                 onClick={() => setIsRevokeModalOpen(false)}
                 className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
                   // This would call an API to revoke access
-                  alert('This would revoke the user\'s access (API not implemented yet)');
+                  alert(
+                    "This would revoke the user's access (API not implemented yet)"
+                  );
                   setIsRevokeModalOpen(false);
                 }}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-colors"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 function CodeDetailsPage({ codeId, onBack }) {
   const [codeDetails, setCodeDetails] = useState(null);
@@ -16,7 +16,7 @@ function CodeDetailsPage({ codeId, onBack }) {
         const data = await response.json();
         setCodeDetails(data);
       } catch (error) {
-        console.error('Error fetching code details:', error);
+        console.error("Error fetching code details:", error);
         setError(error.message);
       } finally {
         setIsLoading(false);
@@ -29,7 +29,7 @@ function CodeDetailsPage({ codeId, onBack }) {
   }, [codeId]);
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) return "N/A";
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
@@ -50,8 +50,19 @@ function CodeDetailsPage({ codeId, onBack }) {
             onClick={onBack}
             className="mr-4 p-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
             </svg>
           </button>
           <h2 className="text-2xl font-bold">Code Details</h2>
@@ -72,8 +83,19 @@ function CodeDetailsPage({ codeId, onBack }) {
             onClick={onBack}
             className="mr-4 p-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
             </svg>
           </button>
           <h2 className="text-2xl font-bold">Code Details</h2>
@@ -94,8 +116,19 @@ function CodeDetailsPage({ codeId, onBack }) {
             onClick={onBack}
             className="mr-4 p-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
             </svg>
           </button>
           <h2 className="text-2xl font-bold">Code Details</h2>
@@ -104,59 +137,76 @@ function CodeDetailsPage({ codeId, onBack }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-[#1e272e] p-5 rounded-lg">
             <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Invite Code</h3>
-              <p className="text-xl font-mono bg-gray-800 p-3 rounded">{codeDetails.code}</p>
+              <h3 className="text-sm font-medium text-gray-400 mb-1">
+                Invite Code
+              </h3>
+              <p className="text-xl font-mono bg-gray-800 p-3 rounded">
+                {codeDetails.code}
+              </p>
             </div>
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-400 mb-1">Status</h3>
               <p className="flex items-center">
-                <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                  codeDetails.is_disabled
-                    ? "bg-gray-500"
-                    : codeDetails.used_count >= codeDetails.max_uses
+                <span
+                  className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                    codeDetails.is_disabled
+                      ? "bg-gray-500"
+                      : codeDetails.used_count >= codeDetails.max_uses
                       ? "bg-gray-500"
                       : new Date(codeDetails.expires_at) < new Date()
-                        ? "bg-red-500"
-                        : "bg-green-500"
-                }`}></span>
+                      ? "bg-red-500"
+                      : "bg-green-500"
+                  }`}
+                ></span>
                 <span>
                   {codeDetails.is_disabled
                     ? "Disabled"
                     : codeDetails.used_count >= codeDetails.max_uses
-                      ? "Used"
-                      : new Date(codeDetails.expires_at) < new Date()
-                        ? "Expired"
-                        : "Active"
-                  }
+                    ? "Used"
+                    : new Date(codeDetails.expires_at) < new Date()
+                    ? "Expired"
+                    : "Active"}
                 </span>
               </p>
             </div>
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-400 mb-1">Usage</h3>
-              <p>{codeDetails.used_count} / {codeDetails.max_uses}</p>
+              <p>
+                {codeDetails.used_count} / {codeDetails.max_uses}
+              </p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Entitlement</h3>
+              <h3 className="text-sm font-medium text-gray-400 mb-1">
+                Entitlement
+              </h3>
               <p>{codeDetails.entitlement_name || "N/A"}</p>
             </div>
           </div>
 
           <div className="bg-[#1e272e] p-5 rounded-lg">
             <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Created At</h3>
+              <h3 className="text-sm font-medium text-gray-400 mb-1">
+                Created At
+              </h3>
               <p>{formatDate(codeDetails.created_at)}</p>
             </div>
             <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Expires At</h3>
+              <h3 className="text-sm font-medium text-gray-400 mb-1">
+                Expires At
+              </h3>
               <p>{formatDate(codeDetails.expires_at)}</p>
             </div>
             <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-1">Duration</h3>
+              <h3 className="text-sm font-medium text-gray-400 mb-1">
+                Duration
+              </h3>
               <p>{formatDate(codeDetails.duration)}</p>
             </div>
             {codeDetails.created_by && (
               <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-1">Created By</h3>
+                <h3 className="text-sm font-medium text-gray-400 mb-1">
+                  Created By
+                </h3>
                 <p>{codeDetails.created_by}</p>
               </div>
             )}
@@ -166,22 +216,32 @@ function CodeDetailsPage({ codeId, onBack }) {
 
       {codeDetails.users && codeDetails.users.length > 0 && (
         <div className="p-6 bg-[#2d3436] rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Users Who Redeemed This Code</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Users Who Redeemed This Code
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#1e272e]/50 text-left">
                 <tr className="border-b border-gray-700">
-                  <th scope="col" className="px-6 py-3 font-medium">Username</th>
-                  <th scope="col" className="px-6 py-3 font-medium">Email</th>
-                  <th scope="col" className="px-6 py-3 font-medium">Status</th>
-                  <th scope="col" className="px-6 py-3 font-medium">Date</th>
+                  <th scope="col" className="px-6 py-3 font-medium">
+                    Username
+                  </th>
+                  <th scope="col" className="px-6 py-3 font-medium">
+                    Email
+                  </th>
+                  <th scope="col" className="px-6 py-3 font-medium">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-3 font-medium">
+                    Date
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {codeDetails.users.map((user) => (
                   <tr key={user.id} className="border-b border-gray-700">
                     <td className="px-6 py-4">
-                      <a 
+                      <a
                         href={`/admin/users/${user.id}`}
                         className="text-blue-400 hover:text-blue-300 hover:underline"
                       >

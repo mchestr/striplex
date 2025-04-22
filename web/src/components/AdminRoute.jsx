@@ -1,6 +1,6 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const AdminRoute = () => {
   const { user, isLoading } = useAuth();
@@ -12,8 +12,8 @@ const AdminRoute = () => {
       </div>
     );
   }
-  
-  return (user && user.is_admin) ? <Outlet /> : <Navigate to="/" />;
+
+  return user && user.is_admin ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default AdminRoute;

@@ -141,7 +141,7 @@ function HomePage() {
               Onboarding Guide
             </button>
           )}
-          
+
           {hasSubscriptions ? (
             // Show subscription management button for users with subscriptions
             <button

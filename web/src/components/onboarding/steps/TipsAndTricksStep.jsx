@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const TipsAndTricksStep = ({ onComplete, onPrev, serverInfo }) => {
   return (
@@ -8,33 +8,57 @@ const TipsAndTricksStep = ({ onComplete, onPrev, serverInfo }) => {
         <ul className="list-disc list-inside space-y-2">
           <li>Check if media already exists before requesting</li>
           <li>Download the Plex app on your devices for the best experience</li>
-          <li>Adjust video quality to use Original quality (Maximum) whenever possible</li>
-          {serverInfo.discordServerUrl ? <li>For any issues, reach out on Discord!</li> : "" }
-          <li className="text-yellow-300">New users have limited requests initially - use them wisely!</li>
+          <li>
+            Adjust video quality to use Original quality (Maximum) whenever
+            possible
+          </li>
+          {serverInfo.discordServerUrl ? (
+            <li>For any issues, reach out on Discord!</li>
+          ) : (
+            ""
+          )}
+          <li className="text-yellow-300">
+            New users have limited requests initially - use them wisely!
+          </li>
         </ul>
       </div>
-      
+
       <div className="bg-amber-500/20 border border-amber-500/40 text-amber-200 p-4 rounded-lg text-left">
         <h3 className="font-bold mb-2">Request Limits:</h3>
         <p className="mb-1">
-          New users have an initial quota for requesting TV shows and movies. This helps ensure quality and manage server resources.
+          New users have an initial quota for requesting TV shows and movies.
+          This helps ensure quality and manage server resources.
         </p>
         <p>
-          As you become a more established member of our community, these limits will increase.
+          As you become a more established member of our community, these limits
+          will increase.
         </p>
       </div>
-      
+
       <div className="bg-[#1e272e] p-4 rounded-lg text-left">
         <h3 className="font-bold text-xl mb-2">Helpful Links:</h3>
         <div className="space-y-1">
-          <a href="https://app.plex.tv/desktop" className="block text-blue-400 hover:underline">Plex Web App</a>
-          <a href={serverInfo.requestsUrl} className="block text-blue-400 hover:underline">
-            {serverInfo.isLoading ? 'Loading...' : 'Requests Portal'}
+          <a
+            href="https://app.plex.tv/desktop"
+            className="block text-blue-400 hover:underline"
+          >
+            Plex Web App
           </a>
-          <a href="https://support.plex.tv" className="block text-blue-400 hover:underline">Plex Support</a>
+          <a
+            href={serverInfo.requestsUrl}
+            className="block text-blue-400 hover:underline"
+          >
+            {serverInfo.isLoading ? "Loading..." : "Requests Portal"}
+          </a>
+          <a
+            href="https://support.plex.tv"
+            className="block text-blue-400 hover:underline"
+          >
+            Plex Support
+          </a>
         </div>
       </div>
-      
+
       <div className="flex justify-between">
         <button
           onClick={onPrev}

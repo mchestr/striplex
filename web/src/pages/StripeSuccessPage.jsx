@@ -9,22 +9,27 @@ function StripeSuccessPage({ type }) {
   return (
     <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen py-8 px-4">
       <div className="max-w-3xl mx-auto text-center p-12 rounded-xl shadow-lg bg-[#2d3436] shadow-black/20">
-        <div className={`flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full text-4xl font-light bg-[#2b8a3e] text-[#e3f9e5]`}>
+        <div
+          className={`flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full text-4xl font-light bg-[#2b8a3e] text-[#e3f9e5]`}
+        >
           {type === "Donation" ? "❤️" : "✓"}
         </div>
 
         <h1 className="text-4xl font-extrabold mb-4">
-          {type === "Donation" ? "Thank You for Your Donation!" : `${type} Successful!`}
+          {type === "Donation"
+            ? "Thank You for Your Donation!"
+            : `${type} Successful!`}
         </h1>
 
         {type === "Subscription" ? (
           <p className="text-lg mb-6 text-[#f1f2f6]">
-            Thank you{user ? `, ${user.username}` : ""}! Your
-            subscription will be activated soon.
+            Thank you{user ? `, ${user.username}` : ""}! Your subscription will
+            be activated soon.
           </p>
         ) : (
           <p className="text-lg mb-6 text-[#f1f2f6]">
-            Your support is greatly appreciated{user ? `, ${user.username}` : ""}!
+            Your support is greatly appreciated
+            {user ? `, ${user.username}` : ""}!
           </p>
         )}
 
@@ -36,7 +41,8 @@ function StripeSuccessPage({ type }) {
         ) : (
           <>
             <p className="text-lg mb-6 text-[#f1f2f6]">
-              An invite has been sent to your account and should have been auto-accepted.
+              An invite has been sent to your account and should have been
+              auto-accepted.
             </p>
             <p className="text-lg mb-6 text-[#f1f2f6]">
               You may need to accept the invite within your Plex account to gain

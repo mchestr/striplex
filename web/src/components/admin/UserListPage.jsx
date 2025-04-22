@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 function UserListPage({ onViewUserDetails }) {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -14,7 +14,7 @@ function UserListPage({ onViewUserDetails }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/v1/plex/users');
+      const response = await fetch("/api/v1/plex/users");
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
@@ -22,15 +22,16 @@ function UserListPage({ onViewUserDetails }) {
       setUsers(data.users || []);
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching users:', err);
+      console.error("Error fetching users:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredUsers = users.filter(user => 
-    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user) =>
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -70,11 +71,21 @@ function UserListPage({ onViewUserDetails }) {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-[#1e272e]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Admin</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Created</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Admin
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-[#2d3436] divide-y divide-gray-700">
@@ -82,7 +93,9 @@ function UserListPage({ onViewUserDetails }) {
                 filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-[#3a4149]">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">{user.username}</div>
+                      <div className="text-sm font-medium text-white">
+                        {user.username}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-300">{user.email}</div>
@@ -90,9 +103,13 @@ function UserListPage({ onViewUserDetails }) {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-300">
                         {user.is_admin ? (
-                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">Admin</span>
+                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs">
+                            Admin
+                          </span>
                         ) : (
-                          <span className="bg-gray-700/30 text-gray-400 px-2 py-1 rounded-full text-xs">User</span>
+                          <span className="bg-gray-700/30 text-gray-400 px-2 py-1 rounded-full text-xs">
+                            User
+                          </span>
                         )}
                       </div>
                     </td>
@@ -113,8 +130,13 @@ function UserListPage({ onViewUserDetails }) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center text-gray-400">
-                    {searchTerm ? "No users matching your search" : "No users found"}
+                  <td
+                    colSpan="5"
+                    className="px-6 py-4 text-center text-gray-400"
+                  >
+                    {searchTerm
+                      ? "No users matching your search"
+                      : "No users found"}
                   </td>
                 </tr>
               )}
