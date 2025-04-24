@@ -36,6 +36,7 @@ type Database interface {
 	GetPlexUser(ctx context.Context, userID int) (*models.PlexUser, error)
 	GetPlexUserByEmail(ctx context.Context, email string) (*models.PlexUser, error)
 	GetAllPlexUsers(ctx context.Context) ([]models.PlexUser, error)
+	DeletePlexUser(ctx context.Context, userID int) error
 
 	// Plex User Invite operations
 	AssociatePlexUserWithInviteCode(ctx context.Context, userID, inviteCodeID int) error

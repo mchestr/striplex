@@ -78,3 +78,23 @@ func (db *sqlDB) GetAllPlexUsers(ctx context.Context) ([]models.PlexUser, error)
 
 	return users, rows.Err()
 }
+
+func (db *sqlDB) DeletePlexUser(ctx context.Context, userID int) error {
+	// First delete user-related records in dependent tables
+	_, err := db.conn.ExecContext(ctx, `
+		DELETE FROM plex_user_invites WHERE user_id = $1;`, userID)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.conn.ExecContext(ctx, `
+		DELETE FROM plex_tokens WHERE user_id = $1;`, userID)
+	if err != nil {
+		return err
+	}
+
+	// Finally delete the user record
+	_, err = db.conn.ExecContext(ctx, `
+		DELETE FROM plex_users WHERE id = $1;`, userID)
+	return err
+}

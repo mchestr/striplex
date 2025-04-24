@@ -17,7 +17,7 @@ import (
 // PlexServicer defines the interface for Plex Media Server API operations
 type PlexServicer interface {
 	// UnshareLibrary removes a user's access to the Plex server
-	UnshareLibrary(ctx context.Context, userID string) error
+	UnshareLibrary(ctx context.Context, userID int) error
 
 	// ShareLibrary shares specific libraries with a Plex user
 	ShareLibrary(ctx context.Context, email string) (*PlexShareResponse, error)
@@ -65,12 +65,8 @@ func NewPlexService(client *http.Client) *PlexService {
 }
 
 // UnshareLibrary removes a user's access to the Plex server
-func (p *PlexService) UnshareLibrary(ctx context.Context, userID string) error {
-	if userID == "" {
-		return fmt.Errorf("userID cannot be empty")
-	}
-
-	url := fmt.Sprintf("https://plex.tv/api/v2/sharings/%s", userID)
+func (p *PlexService) UnshareLibrary(ctx context.Context, userID int) error {
+	url := fmt.Sprintf("https://plex.tv/api/v2/sharings/%d", userID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
 	if err != nil {

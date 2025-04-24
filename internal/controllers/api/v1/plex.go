@@ -157,7 +157,7 @@ func (h *V1) RevokePlexAccess(c echo.Context) error {
 	}
 
 	// Revoke access in Plex
-	if err := h.services.Plex.UnshareLibrary(c.Request().Context(), strconv.Itoa(id)); err != nil {
+	if err := h.services.Plex.UnshareLibrary(c.Request().Context(), id); err != nil {
 		slog.Error("Failed to revoke Plex access", "error", err, "user_id", id)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to revoke Plex access")
 	}
@@ -165,7 +165,40 @@ func (h *V1) RevokePlexAccess(c echo.Context) error {
 	return c.JSON(http.StatusOK, RevokeAccessResponse{
 		BaseResponse: models.BaseResponse{
 			Status:  "success",
-			Message: "Access revoked successfully",
+			Message: "access revoked successfully",
 		},
+	})
+}
+
+// DeleteCurrentUser deletes the currently authenticated user's information
+func (h *V1) DeletePlexUser(c echo.Context, user *models.UserInfo) error {
+	if config.C.Plex.AdminUserID == user.ID {
+		return echo.NewHTTPError(http.StatusForbidden, "cannot delete admin users")
+	} // Get user ID from path parameter
+
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
+	}
+	// Unshare the Plex library with the user
+	if err := h.services.Plex.UnshareLibrary(c.Request().Context(), id); err != nil {
+		slog.Error("Failed to unshare Plex library with user",
+			"error", err,
+			"user_id", user.ID)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to unshare Plex library")
+	}
+
+	// Delete the user from the database
+	if err := db.DB.DeletePlexUser(c.Request().Context(), id); err != nil {
+		slog.Error("Failed to delete user from database",
+			"error", err,
+			"user_id", user.ID)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete user")
+	}
+
+	return c.JSON(http.StatusOK, models.BaseResponse{
+		Status:  "success",
+		Message: "user deleted successfully",
 	})
 }

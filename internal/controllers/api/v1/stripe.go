@@ -10,6 +10,7 @@ import (
 	"plefi/internal/config"
 	"plefi/internal/db"
 	"plefi/internal/models"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v82"
@@ -281,8 +282,15 @@ func (s *V1) handleEntitlementRemoval(
 		return fmt.Errorf("no plex user ID found for customer %s", stripeCustomer.ID)
 	}
 
+	id, err := strconv.Atoi(plexUserID)
+	if err != nil {
+		slog.Error("Invalid Plex user ID in customer metadata",
+			"customer", stripeCustomer.ID,
+			"plex_user_id", plexUserID)
+		return fmt.Errorf("invalid plex user ID %s for customer %s: %w", plexUserID, stripeCustomer.ID, err)
+	}
 	// Unshare library with the Plex user using ID
-	if err := s.services.Plex.UnshareLibrary(ctx, plexUserID); err != nil {
+	if err := s.services.Plex.UnshareLibrary(ctx, id); err != nil {
 		return fmt.Errorf("failed to unshare Plex library with user ID %s: %w", plexUserID, err)
 	}
 

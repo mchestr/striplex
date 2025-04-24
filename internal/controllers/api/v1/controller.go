@@ -45,6 +45,8 @@ func (v *V1) GetRoutes(r *echo.Group) {
 			admin.GET("", v.GetPlexUsers)
 			admin.GET("/:id", v.GetPlexUser)
 			admin.GET("/:id/invites", v.GetPlexUserInvites)
+			admin.DELETE("/:id", middleware.UserHandler(v.DeletePlexUser))
+			admin.DELETE("/:id/access", v.RevokePlexAccess)
 		}
 		plex.GET("/check-access", middleware.UserHandler(v.CheckServerAccess))
 	}
