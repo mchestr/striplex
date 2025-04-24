@@ -13,7 +13,7 @@ import (
 )
 
 // CheckServerAccess checks if the authenticated user has access to the Plex server
-func (h *V1) CheckServerAccess(c echo.Context, user *models.UserInfo) error {
+func (h *V1) GetServerAccess(c echo.Context, user *models.UserInfo) error {
 	// Check if the user has access to the server
 	hasAccess, err := h.services.Plex.UserHasServerAccess(c.Request().Context(), user.ID)
 	if err != nil {
@@ -28,6 +28,34 @@ func (h *V1) CheckServerAccess(c echo.Context, user *models.UserInfo) error {
 			Status: "success",
 		},
 		HasAccess: hasAccess || user.ID == config.C.Plex.AdminUserID,
+	})
+	return nil
+}
+
+// CheckServerAccess checks if the authenticated user has access to the Plex server
+func (h *V1) CheckServerAccess(c echo.Context) error {
+	idStr := c.Param("id")
+	if idStr == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "user ID is required")
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
+	}
+	// Check if the user has access to the server
+	hasAccess, err := h.services.Plex.UserHasServerAccess(c.Request().Context(), id)
+	if err != nil {
+		slog.Error("Failed to check server access",
+			"error", err,
+			"user_id", id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check server access")
+	}
+
+	c.JSON(http.StatusOK, models.CheckServerAccessResponse{
+		BaseResponse: models.BaseResponse{
+			Status: "success",
+		},
+		HasAccess: hasAccess || id == config.C.Plex.AdminUserID,
 	})
 	return nil
 }
@@ -172,16 +200,15 @@ func (h *V1) RevokePlexAccess(c echo.Context) error {
 
 // DeleteCurrentUser deletes the currently authenticated user's information
 func (h *V1) DeletePlexUser(c echo.Context, user *models.UserInfo) error {
-	if config.C.Plex.AdminUserID == user.ID {
-		return echo.NewHTTPError(http.StatusForbidden, "cannot delete admin users")
-	} // Get user ID from path parameter
-
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid user ID")
 	}
-	// Unshare the Plex library with the user
+	if config.C.Plex.AdminUserID == id {
+		return echo.NewHTTPError(http.StatusForbidden, "cannot delete admin users")
+	}
+
 	if err := h.services.Plex.UnshareLibrary(c.Request().Context(), id); err != nil {
 		slog.Error("Failed to unshare Plex library with user",
 			"error", err,

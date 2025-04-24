@@ -23,8 +23,6 @@ function AdminDashboardPage() {
       setCurrentSection("codes");
     } else if (location.pathname.includes("/admin/users")) {
       setCurrentSection("users");
-    } else if (location.pathname.includes("/admin/settings")) {
-      setCurrentSection("settings");
     }
   }, [location.pathname]);
 
@@ -40,9 +38,6 @@ function AdminDashboardPage() {
       case "users":
         navigate("/admin/users");
         break;
-      case "settings":
-        navigate("/admin/settings");
-        break;
       default:
         navigate("/admin");
     }
@@ -52,7 +47,6 @@ function AdminDashboardPage() {
   const menuItems = [
     { id: "codes", label: "Invite Codes", icon: "ticket" },
     { id: "users", label: "Users", icon: "users" },
-    { id: "settings", label: "Settings", icon: "cog" },
   ];
 
   // Renders the appropriate icon based on the icon name
@@ -166,16 +160,6 @@ function AdminDashboardPage() {
     return <UserDetailsPage userId={id} onBack={handleBackToList} />;
   };
 
-  // Settings placeholder
-  const Settings = () => (
-    <div className="p-6 bg-[#2d3436] rounded-lg">
-      <h2 className="text-2xl font-bold mb-4">Admin Settings</h2>
-      <p className="text-gray-300">
-        Settings functionality will be implemented here.
-      </p>
-    </div>
-  );
-
   return (
     <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen">
       <div className="flex flex-col md:flex-row">
@@ -260,7 +244,6 @@ function AdminDashboardPage() {
               <Route path="/codes/:id" element={<CodeDetailsWithNav />} />
               <Route path="/users" element={<UserListWithNav />} />
               <Route path="/users/:id" element={<UserDetailsWithNav />} />
-              <Route path="/settings" element={<Settings />} />
               <Route
                 path="*"
                 element={<Navigate to="/admin/codes" replace />}

@@ -45,10 +45,11 @@ func (v *V1) GetRoutes(r *echo.Group) {
 			admin.GET("", v.GetPlexUsers)
 			admin.GET("/:id", v.GetPlexUser)
 			admin.GET("/:id/invites", v.GetPlexUserInvites)
+			admin.GET("/:id/access", v.CheckServerAccess)
 			admin.DELETE("/:id", middleware.UserHandler(v.DeletePlexUser))
 			admin.DELETE("/:id/access", v.RevokePlexAccess)
 		}
-		plex.GET("/check-access", middleware.UserHandler(v.CheckServerAccess))
+		plex.GET("/check-access", middleware.UserHandler(v.GetServerAccess))
 	}
 	// Add new routes for invite code management
 	codes := r.Group("/codes")

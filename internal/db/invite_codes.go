@@ -130,8 +130,7 @@ func (db *sqlDB) AssociatePlexUserWithInviteCode(ctx context.Context, userID, in
 
 func (db *sqlDB) GetPlexUserInvites(ctx context.Context, userID int) ([]models.PlexUserInvite, error) {
 	rows, err := db.conn.QueryContext(ctx, `
-        SELECT pui.id, pui.user_id, pui.invite_code_id, pui.used_at, pui.expires_at, 
-               ic.code, ic.entitlement_name
+        SELECT pui.id, pui.user_id, pui.invite_code_id, pui.used_at, ic.code, ic.entitlement_name
         FROM plex_user_invites pui
         JOIN invite_codes ic ON pui.invite_code_id = ic.id
         WHERE pui.user_id = $1
@@ -148,7 +147,7 @@ func (db *sqlDB) GetPlexUserInvites(ctx context.Context, userID int) ([]models.P
 		var invite models.PlexUserInvite
 		err := rows.Scan(
 			&invite.ID, &invite.UserID, &invite.InviteCodeID,
-			&invite.UsedAt, &invite.ExpiresAt, &invite.InviteCode, &invite.EntitlementName,
+			&invite.UsedAt, &invite.InviteCode, &invite.EntitlementName,
 		)
 		if err != nil {
 			return nil, err

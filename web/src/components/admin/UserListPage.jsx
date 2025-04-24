@@ -5,6 +5,10 @@ function UserListPage({ onViewUserDetails }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -26,6 +30,42 @@ function UserListPage({ onViewUserDetails }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch(`/api/v1/plex/users/${userToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete user");
+      }
+
+      // Close modal and refresh user list
+      setDeleteModalOpen(false);
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (err) {
+      setDeleteError(err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openDeleteModal = (user) => {
+    setUserToDelete(user);
+    setDeleteModalOpen(true);
+    setDeleteError(null);
   };
 
   const filteredUsers = users.filter(
@@ -125,6 +165,14 @@ function UserListPage({ onViewUserDetails }) {
                       >
                         View Details
                       </button>
+                      {!user.is_admin && (
+                        <button
+                          onClick={() => openDeleteModal(user)}
+                          className="text-red-500 hover:text-red-400"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -142,6 +190,50 @@ function UserListPage({ onViewUserDetails }) {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {deleteModalOpen && userToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#2d3436] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-xl font-semibold mb-4 text-white">
+              Confirm User Deletion
+            </h3>
+            <p className="mb-6 text-gray-300">
+              Are you sure you want to delete user{" "}
+              <span className="font-semibold">{userToDelete.username}</span>?
+              This action cannot be undone.
+            </p>
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-900/20 border border-red-900 text-red-400 rounded-lg">
+                {deleteError}
+              </div>
+            )}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-colors flex items-center"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete User"
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
