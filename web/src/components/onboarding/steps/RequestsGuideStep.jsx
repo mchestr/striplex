@@ -10,6 +10,15 @@ const RequestsGuideStep = ({ onNext, onPrev, serverInfo, nextStepName }) => {
           requests portal.
         </p>
 
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-300/80 p-3 rounded-lg text-left text-sm">
+          <h3 className="font-medium mb-1">Request Limits:</h3>
+          <p>
+            Users are initially limited on the number of shows and movies they
+            can request.
+          </p>
+          <p>Limits are reset weekly and will increase with more watch time.</p>
+        </div>
+
         {serverInfo.isLoading ? (
           <div className="mt-4 text-gray-400">Loading requests link...</div>
         ) : (

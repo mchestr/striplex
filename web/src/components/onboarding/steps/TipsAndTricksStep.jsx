@@ -23,18 +23,6 @@ const TipsAndTricksStep = ({ onComplete, onPrev, serverInfo }) => {
         </ul>
       </div>
 
-      <div className="bg-amber-500/20 border border-amber-500/40 text-amber-200 p-4 rounded-lg text-left">
-        <h3 className="font-bold mb-2">Request Limits:</h3>
-        <p className="mb-1">
-          New users have an initial quota for requesting TV shows and movies.
-          This helps ensure quality and manage server resources.
-        </p>
-        <p>
-          As you become a more established member of our community, these limits
-          will increase.
-        </p>
-      </div>
-
       <div className="bg-[#1e272e] p-4 rounded-lg text-left">
         <h3 className="font-bold text-xl mb-2">Helpful Links:</h3>
         <div className="space-y-1">
