@@ -10,6 +10,7 @@ function ClaimCodePage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [currentStep, setCurrentStep] = useState(user ? 2 : 1); // Step 0: Authentication, Step 1: Claim Code
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -62,10 +63,10 @@ function ClaimCodePage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage("Code claimed successfully!");
-        setMessageType("success");
-        // Redirect to the onboarding wizard after successful claim
-        setTimeout(() => navigate("/onboarding"), 2000);
+        // Show the success animation
+        setShowSuccessAnimation(true);
+        // Redirect to the onboarding wizard after animation completes
+        setTimeout(() => navigate("/onboarding"), 3000);
       } else {
         setMessage(data.error || "Failed to claim code");
         setMessageType("error");
@@ -77,6 +78,40 @@ function ClaimCodePage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Success Animation Component
+  const SuccessAnimation = () => {
+    return (
+      <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center overflow-hidden">
+        <div className="success-animation">
+          <div className="firework-container">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className={`firework firework-${i}`}></div>
+            ))}
+          </div>
+          <div className="success-content animate-fade-in">
+            <svg
+              className="checkmark animate-checkmark"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 52 52"
+            >
+              <circle className="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+              <path className="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+            </svg>
+            <h2 className="text-3xl font-bold text-white mt-8 animate-slide-up">
+              Code Claimed Successfully!
+            </h2>
+            <p className="text-xl text-gray-200 mt-4 animate-slide-up animation-delay-300">
+              Welcome to {serverInfo?.serverName || "our service"}
+            </p>
+            <p className="text-lg text-blue-300 mt-6 animate-slide-up animation-delay-500">
+              Lets get started with some onboarding!
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Server name display component
@@ -207,6 +242,7 @@ function ClaimCodePage() {
 
   return (
     <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen">
+      {showSuccessAnimation && <SuccessAnimation />}
       <div className="bg-[#2d3436] shadow-lg shadow-black/20 p-8 md:p-12 rounded-xl text-center max-w-md w-[90%]">
         {currentStep === 1 ? renderAuthenticationStep() : renderClaimCodeStep()}
 
@@ -219,6 +255,116 @@ function ClaimCodePage() {
           </button>
         </div>
       </div>
+      <style jsx>{`
+        @keyframes scale-in {
+          0% { transform: scale(0); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes draw-check {
+          0% { stroke-dashoffset: 100; }
+          100% { stroke-dashoffset: 0; }
+        }
+        
+        @keyframes draw-circle {
+          0% { stroke-dashoffset: 600; }
+          100% { stroke-dashoffset: 0; }
+        }
+        
+        @keyframes firework-animation {
+          0% { transform: translate(0, 0); width: 0px; height: 0px; opacity: 1; }
+          100% { transform: translate(var(--x), var(--y)); width: var(--size); height: var(--size); opacity: 0; }
+        }
+        
+        .checkmark {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          display: block;
+          margin: 0 auto;
+        }
+        
+        .checkmark-circle {
+          stroke-width: 2;
+          stroke: #4bb71b;
+          stroke-dasharray: 166;
+          stroke-dashoffset: 166;
+          fill: none;
+          animation: draw-circle 1s cubic-bezier(0.65, 0, 0.45, 1) forwards 0.5s;
+        }
+        
+        .checkmark-check {
+          stroke-width: 2;
+          stroke: #4bb71b;
+          stroke-dasharray: 48;
+          stroke-dashoffset: 48;
+          fill: none;
+          animation: draw-check 0.8s cubic-bezier(0.65, 0, 0.45, 1) forwards 1s;
+        }
+        
+        .success-animation {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+        }
+        
+        .animate-fade-in {
+          animation: scale-in 0.5s ease forwards;
+        }
+        
+        .animate-slide-up {
+          transform: translateY(20px);
+          opacity: 0;
+          animation: slide-up 0.6s ease forwards;
+        }
+        
+        .animation-delay-300 {
+          animation-delay: 0.3s;
+        }
+        
+        .animation-delay-500 {
+          animation-delay: 0.5s;
+        }
+        
+        @keyframes slide-up {
+          0% { transform: translateY(20px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .firework-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          pointer-events: none;
+        }
+        
+        .firework {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          border-radius: 50%;
+          background-image: radial-gradient(circle, #ff0080, #ff8c00, #40e0d0, #7fff00, #ff0080);
+          background-size: 600% 600%;
+          background-position: center center;
+          animation: firework-animation 1.5s ease-out forwards;
+          mix-blend-mode: screen;
+        }
+        
+        .firework-0 { --x: -180px; --y: -200px; --size: 100px; animation-delay: 0.2s; }
+        .firework-1 { --x: 200px; --y: -150px; --size: 125px; animation-delay: 0.4s; }
+        .firework-2 { --x: -130px; --y: 180px; --size: 80px; animation-delay: 0.6s; }
+        .firework-3 { --x: 150px; --y: 180px; --size: 110px; animation-delay: 0.8s; }
+        .firework-4 { --x: -80px; --y: -120px; --size: 90px; animation-delay: 0.3s; }
+        .firework-5 { --x: 100px; --y: -80px; --size: 130px; animation-delay: 0.5s; }
+        .firework-6 { --x: -200px; --y: 70px; --size: 70px; animation-delay: 0.7s; }
+        .firework-7 { --x: 180px; --y: 100px; --size: 85px; animation-delay: 0.9s; }
+        .firework-8 { --x: -50px; --y: -180px; --size: 120px; animation-delay: 0.2s; }
+        .firework-9 { --x: 30px; --y: 150px; --size: 95px; animation-delay: 0.4s; }
+      `}</style>
     </div>
   );
 }
