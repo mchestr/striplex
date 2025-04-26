@@ -40,6 +40,12 @@ func main() {
 
 // initApp initializes all application components
 func initApp(environment string) (*server.Server, error) {
+	if environment == "development" {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+	} else {
+		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	}
+	slog.Info("Starting application in environment", "environment", environment)
 	// Initialize configuration
 	if err := config.Init(environment); err != nil {
 		return nil, fmt.Errorf("config initialization error: %w", err)
