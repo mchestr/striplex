@@ -20,6 +20,7 @@ function CodeListPage({ onViewCodeDetails }) {
   const [expirationOption, setExpirationOption] = useState("never");
   const [durationOption, setDurationOption] = useState("never");
   const customCodeInputRef = useRef(null); // Ref for the custom code input
+  const [copiedCode, setCopiedCode] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -165,6 +166,19 @@ function CodeListPage({ onViewCodeDetails }) {
       // Set error in state instead of showing alert
       setDeleteError(error.message);
     }
+  };
+
+  const handleCopyLink = (code) => {
+    const claimUrl = `${window.location.origin}/claim/${code}`;
+    navigator.clipboard
+      .writeText(claimUrl)
+      .then(() => {
+        setCopiedCode(code);
+        setTimeout(() => setCopiedCode(null), 2000); // Reset after 2 seconds
+      })
+      .catch((err) => {
+        console.error("Failed to copy link: ", err);
+      });
   };
 
   const formatDate = (timestamp) => {
@@ -576,12 +590,55 @@ function CodeListPage({ onViewCodeDetails }) {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => handleDeleteCode(code.id)}
-                        className="px-3 py-1 bg-red-800 hover:bg-red-700 text-red-100 rounded-md text-sm"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex space-x-2">
+                        {!code.is_disabled &&
+                          code.used_count < code.max_uses &&
+                          (!code.expires_at ||
+                            new Date(code.expires_at) > new Date()) && (
+                            <button
+                              onClick={() => handleCopyLink(code.code)}
+                              className="px-3 py-1 bg-blue-800 hover:bg-blue-700 text-blue-100 rounded-md text-sm flex items-center"
+                              title="Copy shareable link"
+                            >
+                              {copiedCode === code.code ? (
+                                <>
+                                  <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    ></path>
+                                  </svg>
+                                  Copied
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z"></path>
+                                    <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z"></path>
+                                  </svg>
+                                  Share
+                                </>
+                              )}
+                            </button>
+                          )}
+                        <button
+                          onClick={() => handleDeleteCode(code.id)}
+                          className="px-3 py-1 bg-red-800 hover:bg-red-700 text-red-100 rounded-md text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

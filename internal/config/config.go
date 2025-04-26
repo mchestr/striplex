@@ -148,6 +148,7 @@ func generateConfig(config *viper.Viper) {
 		slog.Warn("error on parsing trusted proxies", "error", err)
 	}
 	C = AppConfig{
+		Debug: config.GetBool("debug"),
 		Auth: AuthConfig{
 			SessionSecret: Secret(config.GetString("auth.session_secret")),
 			SessionName:   config.GetString("auth.session_name"),

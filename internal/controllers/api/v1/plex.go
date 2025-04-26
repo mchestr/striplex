@@ -83,6 +83,16 @@ type RevokeAccessResponse struct {
 	models.BaseResponse
 }
 
+// GrantAccessResponse represents the response for granting a user's access
+type GrantAccessResponse struct {
+	models.BaseResponse
+}
+
+// GrantPlexAccessRequest represents the request body for granting Plex access
+type GrantPlexAccessRequest struct {
+	UserID string `json:"user_id"`
+}
+
 // GetPlexUsers returns a list of all Plex users (admin only)
 func (h *V1) GetPlexUsers(c echo.Context) error {
 	// Get all users from the database
@@ -194,6 +204,68 @@ func (h *V1) RevokePlexAccess(c echo.Context) error {
 		BaseResponse: models.BaseResponse{
 			Status:  "success",
 			Message: "access revoked successfully",
+		},
+	})
+}
+
+// GrantPlexAccess grants a user access to the Plex server (admin only)
+func (h *V1) GrantPlexAccess(c echo.Context) error {
+	// Parse request body
+	var req GrantPlexAccessRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
+
+	id, err := strconv.Atoi(req.UserID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
+	}
+
+	// Check if user exists
+	user, err := db.DB.GetPlexUser(c.Request().Context(), id)
+	if err != nil || user == nil {
+		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	}
+
+	// Check if user already has access
+	hasAccess, err := h.services.Plex.UserHasServerAccess(c.Request().Context(), id)
+	if err != nil {
+		slog.Error("Failed to check server access", "error", err, "user_id", id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check server access")
+	}
+
+	if hasAccess {
+		return echo.NewHTTPError(http.StatusBadRequest, "User already has access")
+	}
+
+	// User needs an email to grant access
+	if user.Email == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "User has no email address")
+	}
+
+	// Share Plex library with the user
+	invite, err := h.services.Plex.ShareLibrary(c.Request().Context(), user.Email)
+	if err != nil {
+		slog.Error("Failed to share Plex library with user", "error", err, "user_id", id, "email", user.Email)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to grant Plex access")
+	}
+
+	// Try to auto-accept the invitation if we have the user's Plex token
+	token, tokenErr := db.DB.GetPlexToken(c.Request().Context(), id)
+	if tokenErr == nil && token != nil && token.AccessToken != "" {
+		if acceptErr := h.services.Plex.AcceptInvite(c.Request().Context(), token.AccessToken, invite.ID); acceptErr != nil {
+			slog.Error("Failed to auto-accept invite", "error", acceptErr, "invite_id", invite.ID)
+			// Continue despite error as the invite was sent successfully
+		} else {
+			slog.Info("Auto-accepted invite for user", "user_id", id, "invite_id", invite.ID)
+		}
+	}
+
+	slog.Info("Plex library shared with user", "user_id", id, "email", user.Email, "invite_id", invite.ID)
+	return c.JSON(http.StatusOK, GrantAccessResponse{
+		BaseResponse: models.BaseResponse{
+			Status:  "success",
+			Message: "access granted successfully",
 		},
 	})
 }

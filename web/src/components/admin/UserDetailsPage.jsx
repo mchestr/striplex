@@ -9,6 +9,8 @@ function UserDetailsPage({ userId, onBack }) {
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState(null);
   const [plexAccess, setPlexAccess] = useState(null);
+  const [isGranting, setIsGranting] = useState(false);
+  const [grantError, setGrantError] = useState(null);
 
   useEffect(() => {
     if (userId) {
@@ -75,6 +77,33 @@ function UserDetailsPage({ userId, onBack }) {
       setRevokeError(err.message);
     } finally {
       setIsRevoking(false);
+    }
+  };
+
+  const handleGrantAccess = async () => {
+    setIsGranting(true);
+    setGrantError(null);
+    try {
+      const response = await fetch(`/api/v1/plex/users/access`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to grant access");
+      }
+
+      // If successful, refresh user details to show updated access
+      fetchUserDetails();
+    } catch (err) {
+      setGrantError(err.message);
+      console.error("Error granting access:", err);
+    } finally {
+      setIsGranting(false);
     }
   };
 
@@ -332,13 +361,24 @@ function UserDetailsPage({ userId, onBack }) {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-white font-medium">
-                        <a 
-                          href={`/admin/codes/${invite.id}`} 
+                        <a
+                          href={`/admin/codes/${invite.id}`}
                           className="text-blue-400 hover:text-blue-300 hover:underline font-medium flex items-center"
                         >
                           {invite.invite_code}
-                          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                          <svg
+                            className="w-4 h-4 ml-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            ></path>
                           </svg>
                         </a>
                       </p>
@@ -363,17 +403,40 @@ function UserDetailsPage({ userId, onBack }) {
           )}
         </div>
       </div>
-      {!user.is_admin && plexAccess && (
+      {!user.is_admin && (
         <div className="bg-[#3a4149] p-6 rounded-lg">
           <h3 className="text-lg font-semibold mb-4 text-white">Actions</h3>
           <div className="flex flex-wrap gap-3">
-            <button
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-              onClick={() => setIsRevokeModalOpen(true)}
-            >
-              Revoke Plex Access
-            </button>
+            {plexAccess ? (
+              <button
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+                onClick={() => setIsRevokeModalOpen(true)}
+              >
+                Revoke Plex Access
+              </button>
+            ) : (
+              <button
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+                onClick={handleGrantAccess}
+                disabled={isGranting}
+              >
+                {isGranting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Granting Access...
+                  </>
+                ) : (
+                  "Grant Plex Access"
+                )}
+              </button>
+            )}
           </div>
+
+          {grantError && (
+            <div className="mt-4 p-3 bg-red-900/20 border border-red-900 text-red-400 rounded-lg">
+              {grantError}
+            </div>
+          )}
         </div>
       )}
 

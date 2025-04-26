@@ -42,6 +42,7 @@ func main() {
 func initApp(environment string) (*server.Server, error) {
 	if environment == "development" {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+		slog.SetLogLoggerLevel(slog.LevelDebug)
 	} else {
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	}

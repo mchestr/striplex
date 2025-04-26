@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"plefi/internal/config"
@@ -20,7 +21,37 @@ func NewRouter(svcs *services.Services, client *http.Client) *echo.Echo {
 	// Initialize router
 	e := echo.New()
 	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestID())
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:    true,
+		LogURI:       true,
+		LogError:     true,
+		LogMethod:    true,
+		LogRemoteIP:  true,
+		LogRequestID: true,
+		HandleError:  true, // forwards error to the global error handler, so it can decide appropriate status code
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error == nil {
+				slog.LogAttrs(context.Background(), slog.LevelInfo, "req",
+					slog.String("remote_ip", v.RemoteIP),
+					slog.String("request_id", v.RequestID),
+					slog.String("method", v.Method),
+					slog.String("uri", v.URI),
+					slog.Int("status", v.Status),
+				)
+			} else {
+				slog.LogAttrs(context.Background(), slog.LevelError, "req",
+					slog.String("remote_ip", v.RemoteIP),
+					slog.String("request_id", v.RequestID),
+					slog.String("method", v.Method),
+					slog.String("uri", v.URI),
+					slog.Int("status", v.Status),
+					slog.String("err", v.Error.Error()),
+				)
+			}
+			return nil
+		},
+	}))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.C.Auth.SessionSecret))))
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Root:  config.C.Server.StaticPath,
