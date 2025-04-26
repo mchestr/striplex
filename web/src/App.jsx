@@ -53,12 +53,12 @@ function App() {
               path="/onboarding/step/:step"
               element={<OnboardingWizardPage />}
             />
+            <Route path="/claim" element={<ClaimCodePage />} />
+            <Route path="/claim/:code" element={<ClaimCodePage />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/subscriptions" element={<SubscriptionsPage />} />
-              <Route path="/claim" element={<ClaimCodePage />} />
-              <Route path="/claim/:code" element={<ClaimCodePage />} />
             </Route>
 
             <Route element={<AdminRoute />}>

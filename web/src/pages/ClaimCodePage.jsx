@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import PlexSignInButton from "../components/PlexSignInButton";
+import { useAuth } from "../context/AuthContext";
 
 function ClaimCodePage() {
+  const { user } = useAuth();
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -63,9 +66,36 @@ function ClaimCodePage() {
     }
   };
 
-  return (
-    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen">
-      <div className="bg-[#2d3436] shadow-lg shadow-black/20 p-8 md:p-12 rounded-xl text-center max-w-md w-[90%]">
+  // Step 1: Authentication required step
+  const renderAuthenticationStep = () => {
+    return (
+      <>
+        <h1 className="text-3xl font-bold mb-6">Claim Your Code</h1>
+        
+        <div className="bg-[#2a333b] border-l-4 border-[#4b6bfb] p-5 rounded-md mb-6 text-left">
+          <h2 className="text-lg font-semibold mb-2 text-gray-100">Authentication Required</h2>
+          <p className="text-gray-300 text-sm">
+            Before you can claim your code, you need to sign in with your Plex account or create a new one.
+          </p>
+        </div>
+
+        <div className="flex flex-col space-y-4">
+          <PlexSignInButton nextUrl={location.pathname} />
+          <p className="text-amber-300/80 text-xs mt-1 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Unverified app - Plex may show a warning during sign-in
+          </p>
+        </div>
+      </>
+    );
+  };
+
+  // Step 2: Claim code step
+  const renderClaimCodeStep = () => {
+    return (
+      <>
         <h1 className="text-3xl font-bold mb-6">Claim Your Code</h1>
 
         {message && (
@@ -111,6 +141,14 @@ function ClaimCodePage() {
             {isSubmitting ? "Claiming..." : "Claim Code"}
           </button>
         </form>
+      </>
+    );
+  };
+
+  return (
+    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen">
+      <div className="bg-[#2d3436] shadow-lg shadow-black/20 p-8 md:p-12 rounded-xl text-center max-w-md w-[90%]">
+        {!user ? renderAuthenticationStep() : renderClaimCodeStep()}
 
         <div className="mt-8">
           <button
