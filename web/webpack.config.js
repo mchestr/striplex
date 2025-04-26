@@ -129,32 +129,34 @@ module.exports = (env, argv) => {
       ],
       splitChunks: {
         chunks: 'all',
+        maxInitialRequests: 25,
         minSize: 20000,
-        minChunks: 1,
-        maxAsyncRequests: 30,
-        maxInitialRequests: 30,
-        automaticNameDelimiter: '.',
         cacheGroups: {
-          vendors: {
+          defaultVendors: {
             test: /[\\/]node_modules[\\/]/,
-            name(module) {
-              const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
-              return `npm.${packageName.replace('@', '')}`;
-            },
-            priority: 10,
-          },
-          common: {
-            minChunks: 2,
             priority: -10,
-          },
-          default: {
-            minChunks: 2,
-            priority: -20,
             reuseExistingChunk: true,
+          },
+          react: {
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            name: 'react-vendor',
+            chunks: 'all',
+            priority: 20,
+          },
+          router: {
+            test: /[\\/]node_modules[\\/](react-router|react-router-dom)[\\/]/,
+            name: 'router-vendor',
+            chunks: 'all',
+            priority: 10,
           },
         },
       },
       runtimeChunk: 'single',
+    },
+    performance: {
+      hints: 'warning',
+      maxEntrypointSize: 270000,
+      maxAssetSize: 270000,
     }
   };
 };
