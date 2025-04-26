@@ -7,6 +7,7 @@ import (
 	"plefi/internal/config"
 	"plefi/internal/db"
 	"plefi/internal/models"
+	"plefi/internal/services/plex"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -63,7 +64,7 @@ func (h *V1) CheckServerAccess(c echo.Context) error {
 // GetPlexUsersResponse represents the response for listing Plex users
 type GetPlexUsersResponse struct {
 	models.BaseResponse
-	Users []models.PlexUser `json:"users"`
+	Users []models.PlexUserWithAccess `json:"users"`
 }
 
 // GetPlexUserResponse represents the response for getting a single Plex user
@@ -102,12 +103,31 @@ func (h *V1) GetPlexUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users")
 	}
 
+	plexUsers, err := h.services.Plex.GetUsers(c.Request().Context())
+	if err != nil {
+		slog.Error("Failed to get Plex users from API", "error", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users from Plex API")
+	}
+	//Create map for fast lookup
+	plexUserMap := make(map[int]plex.PlexUser)
+	for _, plexUser := range plexUsers {
+		plexUserMap[plexUser.ID] = plexUser
+	}
+
+	plexUsersWithAccess := make([]models.PlexUserWithAccess, len(users))
+	for i, user := range users {
+		plexUsersWithAccess[i] = models.PlexUserWithAccess{
+			PlexUser:  user,
+			HasAccess: h.services.Plex.CheckUserHasAccess(plexUserMap, user.ID),
+		}
+	}
+
 	return c.JSON(http.StatusOK, GetPlexUsersResponse{
 		BaseResponse: models.BaseResponse{
 			Status:  "success",
 			Message: "Users retrieved successfully",
 		},
-		Users: users,
+		Users: plexUsersWithAccess,
 	})
 }
 

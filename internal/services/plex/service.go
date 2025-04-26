@@ -45,6 +45,9 @@ type PlexServicer interface {
 
 	// GetMachineIdentity returns the server's machineIdentifier from the identity endpoint
 	GetMachineIdentity(ctx context.Context, url, plexToken string) (string, error)
+
+	// CheckUserHasAccess checks if a user has access to the server
+	CheckUserHasAccess(users map[int]PlexUser, userID int) bool
 }
 
 // Verify that PlexService implements the PlexServicer interface
@@ -261,23 +264,30 @@ func (p *PlexService) UserHasServerAccess(ctx context.Context, userID int) (bool
 	if err != nil {
 		return false, fmt.Errorf("failed to get users: %w", err)
 	}
-
-	serverID := config.C.Plex.MachineIdentifier
+	userMap := make(map[int]PlexUser, len(users))
 	for _, user := range users {
-		if user.ID == userID {
-			// Found the user, now check if they have access to our server
-			for _, server := range user.Servers {
-				if server.MachineIdentifier == serverID {
-					return true, nil
-				}
-			}
-			// User found but doesn't have access to our server
-			return false, nil
-		}
+		userMap[user.ID] = user
+	}
+	return p.CheckUserHasAccess(userMap, userID), nil
+}
+
+func (p *PlexService) CheckUserHasAccess(users map[int]PlexUser, userID int) bool {
+	if config.C.Plex.AdminUserID == userID {
+		return true
+	}
+	user, ok := users[userID]
+	if !ok {
+		return false
 	}
 
-	// User not found
-	return false, nil
+	serverID := config.C.Plex.MachineIdentifier
+	for _, server := range user.Servers {
+		if server.MachineIdentifier == serverID {
+			return true
+		}
+	}
+	// User found but doesn't have access to our server
+	return false
 }
 
 // GetUserDetails retrieves detailed information about the authenticated user

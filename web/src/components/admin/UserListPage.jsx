@@ -121,6 +121,9 @@ function UserListPage({ onViewUserDetails }) {
                   Admin
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Access
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Created
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -134,7 +137,12 @@ function UserListPage({ onViewUserDetails }) {
                   <tr key={user.id} className="hover:bg-[#3a4149]">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">
-                        {user.username}
+                        <button
+                          onClick={() => onViewUserDetails(user.id)}
+                          className="text-[#4b6bfb] hover:text-blue-400 hover:underline focus:outline-none"
+                        >
+                          {user.username}
+                        </button>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -155,16 +163,23 @@ function UserListPage({ onViewUserDetails }) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-300">
+                        {user.has_access ? (
+                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs flex items-center justify-center w-6 h-6">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded-full text-xs flex items-center justify-center w-6 h-6">
+                            ✗
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-300">
                         {new Date(user.created_at).toLocaleDateString()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => onViewUserDetails(user.id)}
-                        className="text-[#4b6bfb] hover:text-blue-400 mr-3"
-                      >
-                        View Details
-                      </button>
                       {!user.is_admin && (
                         <button
                           onClick={() => openDeleteModal(user)}
@@ -179,7 +194,7 @@ function UserListPage({ onViewUserDetails }) {
               ) : (
                 <tr>
                   <td
-                    colSpan="5"
+                    colSpan="6"
                     className="px-6 py-4 text-center text-gray-400"
                   >
                     {searchTerm

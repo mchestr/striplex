@@ -15,6 +15,11 @@ type PlexUser struct {
 	UpdatedAt time.Time `json:"updated_at"` // When the user was last updated in our system
 }
 
+type PlexUserWithAccess struct {
+	PlexUser
+	HasAccess bool `json:"has_access"` // Does this user have access to the server
+}
+
 // PlexUserInvite associates a user with an invite code they've used
 type PlexUserInvite struct {
 	ID              int       `json:"id"`               // Primary key
