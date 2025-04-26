@@ -4,7 +4,7 @@ import PlexSignInButton from "../components/PlexSignInButton";
 import { useAuth } from "../context/AuthContext";
 
 function ClaimCodePage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, serverInfo } = useAuth();
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -79,10 +79,38 @@ function ClaimCodePage() {
     }
   };
 
+  // Server name display component
+  const ServerNameHeader = () => {
+    if (!serverInfo || !serverInfo.serverName) return null;
+
+    return (
+      <div className="mb-6 text-center">
+        <div className="inline-block p-2 px-4 bg-[#1e272e] rounded-lg border border-gray-700">
+          <div className="flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2 text-[#4b6bfb]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="font-medium text-lg">{serverInfo.serverName}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Step 1: Authentication required step
   const renderAuthenticationStep = () => {
     return (
       <>
+        <ServerNameHeader />
         <h1 className="text-3xl font-bold mb-6">Claim Your Code</h1>
 
         <div className="bg-[#2a333b] border-l-4 border-[#4b6bfb] p-5 rounded-md mb-6 text-left">
@@ -127,6 +155,7 @@ function ClaimCodePage() {
   const renderClaimCodeStep = () => {
     return (
       <>
+        <ServerNameHeader />
         <h1 className="text-3xl font-bold mb-6">Claim Your Code</h1>
 
         {message && (
