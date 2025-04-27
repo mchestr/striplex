@@ -9,19 +9,30 @@ function CodeListPage({ onViewCodeDetails }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [codeToDelete, setCodeToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null); // New state for delete errors
-  const [newCodeDuration, setNewCodeDuration] = useState("unlimited");
-  const [newCodeMaxUses, setNewCodeMaxUses] = useState(1);
   const [createError, setCreateError] = useState(null);
   const [createSuccess, setCreateSuccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [newCodeDurationDate, setNewCodeDurationDate] = useState(1);
-  const [newCodeExpirationDate, setNewCodeExpirationDate] = useState("");
-  const [expirationOption, setExpirationOption] = useState("never");
-  const [durationOption, setDurationOption] = useState("never");
-  const customCodeInputRef = useRef(null); // Ref for the custom code input
   const [copiedCode, setCopiedCode] = useState(null);
   const navigate = useNavigate();
+
+  const newCodeCodeRef = useRef(null);
+  const newCodeMaxUseRef = useRef(null);
+  const newCodeDurationRef = useRef(null);
+  const newCodeExpirationRef = useRef(null);
+  const resetNewCodeForm = () => {
+    if (newCodeCodeRef.current) {
+      newCodeCodeRef.current = null;
+    }
+    if (newCodeMaxUseRef.current) {
+      newCodeMaxUseRef.current = null;
+    }
+    if (newCodeDurationRef.current) {
+      newCodeDurationRef.current = null;
+    }
+    if (newCodeExpirationRef.current) {
+      newCodeExpirationRef.current = null;
+    }
+  };
 
   useEffect(() => {
     fetchInviteCodes();
@@ -66,56 +77,29 @@ function CodeListPage({ onViewCodeDetails }) {
     }
   };
 
-  const handleExpirationOptionChange = (option) => {
-    setExpirationOption(option);
-    if (option === "never") {
-      setNewCodeExpirationDate("");
-    } else {
-      setNewCodeExpirationDate(calculateDate(option));
-    }
-  };
-
-  const handleDurationOptionChange = (option) => {
-    setDurationOption(option);
-    if (option === "never") {
-      setNewCodeDurationDate("");
-    } else {
-      setNewCodeDurationDate(calculateDate(option));
-    }
-  };
-
   const handleCreateCode = async (e) => {
     e.preventDefault();
     setCreateError(null);
     setCreateSuccess(false);
+    console.log(newCodeDurationRef.current);
 
     try {
-      const currentCustomCodeValue = customCodeInputRef.current
-        ? customCodeInputRef.current.value
-        : "";
-
       let payload = {
-        max_uses: parseInt(newCodeMaxUses, 10),
+        max_uses: parseInt(newCodeMaxUseRef.current.value, 10),
+        ...(newCodeCodeRef.current
+          ? { code: newCodeCodeRef.current.value }
+          : {}),
+        ...(newCodeDurationRef.current &&
+        newCodeDurationRef.current.value !== "never"
+          ? { duration: calculateDate(newCodeDurationRef.current.value) }
+          : {}),
+        ...(newCodeExpirationRef.current &&
+        newCodeExpirationRef.current.value !== "never"
+          ? { expires_at: calculateDate(newCodeExpirationRef.current.value) }
+          : {}),
       };
+      console.log(payload);
 
-      if (currentCustomCodeValue.trim()) {
-        payload.code = currentCustomCodeValue.trim();
-      }
-
-      const duration =
-        durationOption === "custom"
-          ? newCodeDurationDate
-          : calculateDate(durationOption);
-      const expiration =
-        expirationOption === "custom"
-          ? newCodeExpirationDate
-          : calculateDate(expirationOption);
-      if (duration) {
-        payload.duration = duration;
-      }
-      if (expiration) {
-        payload.expires_at = expiration;
-      }
       const response = await fetch("/api/v1/codes", {
         method: "POST",
         headers: {
@@ -131,11 +115,7 @@ function CodeListPage({ onViewCodeDetails }) {
       await fetchInviteCodes();
       setCreateSuccess(false);
       setShowCreateModal(false);
-      setExpirationOption("never");
-      setDurationOption("never");
-      if (customCodeInputRef.current) {
-        customCodeInputRef.current.value = "";
-      }
+      resetNewCodeForm();
     } catch (error) {
       console.error("Error creating invite code:", error);
       setCreateError(error.message);
@@ -203,9 +183,7 @@ function CodeListPage({ onViewCodeDetails }) {
           <button
             onClick={() => {
               setShowCreateModal(false);
-              if (customCodeInputRef.current) {
-                customCodeInputRef.current.value = "";
-              }
+              resetNewCodeForm();
             }}
             className="text-gray-400 hover:text-white"
           >
@@ -231,8 +209,7 @@ function CodeListPage({ onViewCodeDetails }) {
               Expiration
             </label>
             <select
-              value={expirationOption}
-              onChange={(e) => handleExpirationOptionChange(e.target.value)}
+              ref={newCodeExpirationRef}
               className="w-full p-2.5 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
               required
             >
@@ -242,18 +219,7 @@ function CodeListPage({ onViewCodeDetails }) {
               <option value="3months">3 Months</option>
               <option value="6months">6 Months</option>
               <option value="12months">12 Months</option>
-              <option value="custom">Custom Date</option>
             </select>
-
-            {expirationOption === "custom" && (
-              <input
-                type="datetime-local"
-                value={newCodeExpirationDate}
-                onChange={(e) => setNewCodeExpirationDate(e.target.value)}
-                min={new Date().toISOString().slice(0, 16)}
-                className="w-full mt-2 p-2.5 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
-              />
-            )}
           </div>
 
           <div className="mb-4">
@@ -262,89 +228,59 @@ function CodeListPage({ onViewCodeDetails }) {
             </label>
             <input
               type="number"
-              value={newCodeMaxUses}
-              onChange={(e) => setNewCodeMaxUses(e.target.value)}
+              defaultValue="1"
               min="1"
               max="100"
               className="w-full p-2.5 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
+              ref={newCodeMaxUseRef}
               required
             />
           </div>
 
           <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-              className="flex items-center text-sm text-gray-300 hover:text-white"
-            >
-              <svg
-                className={`w-4 h-4 mr-1 transition-transform ${
-                  showAdvancedOptions ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
-              Advanced Options
-            </button>
+            <div className="flex items-center mb-2">
+              <div className="h-px bg-gray-700 flex-grow mr-3"></div>
+              <span className="text-xs uppercase tracking-wider text-gray-400 font-medium">
+                Advanced Options
+              </span>
+              <div className="h-px bg-gray-700 flex-grow ml-3"></div>
+            </div>
 
-            {showAdvancedOptions && (
-              <div className="mt-3 p-3 bg-[#1e272e]/30 border border-gray-700 rounded-lg">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Custom Code Value
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue=""
-                    placeholder="Leave empty for auto-generated code"
-                    className="w-full p-2.5 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
-                    ref={customCodeInputRef}
-                  />
-                  <p className="mt-1 text-xs text-gray-400">
-                    Specify a custom code or leave blank to auto-generate one
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Duration
-                  </label>
-                  <select
-                    value={durationOption}
-                    onChange={(e) => handleDurationOptionChange(e.target.value)}
-                    className="w-full p-2.5 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="never">Unlimited</option>
-                    <option value="7days">7 Days</option>
-                    <option value="1month">1 Month</option>
-                    <option value="3months">3 Months</option>
-                    <option value="6months">6 Months</option>
-                    <option value="12months">12 Months</option>
-                    <option value="custom">Custom Date</option>
-                  </select>
-
-                  {durationOption === "custom" && (
-                    <input
-                      type="datetime-local"
-                      value={newCodeExpirationDate}
-                      onChange={(e) => setNewCodeDuration(e.target.value)}
-                      min={new Date().toISOString().slice(0, 16)}
-                      className="w-full mt-2 p-2.5 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  )}
-                </div>
+            <div className="mt-3 p-3 bg-[#1e272e]/20 border border-gray-700/50 rounded-lg">
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Custom Code Value
+                </label>
+                <input
+                  type="text"
+                  defaultValue=""
+                  placeholder="Leave empty for auto-generated code"
+                  className="w-full p-2 bg-[#3a4149] border border-gray-600/70 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
+                  ref={newCodeCodeRef}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Specify a custom code or leave blank to auto-generate one
+                </p>
               </div>
-            )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Duration
+                </label>
+                <select
+                  className="w-full p-2 bg-[#3a4149] border border-gray-600/70 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
+                  ref={newCodeDurationRef}
+                  defaultValue="never"
+                >
+                  <option value="never">Unlimited</option>
+                  <option value="7days">7 Days</option>
+                  <option value="1month">1 Month</option>
+                  <option value="3months">3 Months</option>
+                  <option value="6months">6 Months</option>
+                  <option value="12months">12 Months</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end">
@@ -352,9 +288,7 @@ function CodeListPage({ onViewCodeDetails }) {
               type="button"
               onClick={() => {
                 setShowCreateModal(false);
-                if (customCodeInputRef.current) {
-                  customCodeInputRef.current.value = "";
-                }
+                resetNewCodeForm();
               }}
               className="mr-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
             >
