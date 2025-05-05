@@ -10,6 +10,7 @@ import (
 	"plefi/internal/services/plex"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -92,6 +93,11 @@ type GrantAccessResponse struct {
 // GrantPlexAccessRequest represents the request body for granting Plex access
 type GrantPlexAccessRequest struct {
 	UserID string `json:"user_id"`
+}
+
+// ImportPlexUsersRequest represents the request body for importing Plex users
+type ImportPlexUsersRequest struct {
+	ImportAll bool `json:"import_all"`
 }
 
 // GetPlexUsers returns a list of all Plex users (admin only)
@@ -319,5 +325,58 @@ func (h *V1) DeletePlexUser(c echo.Context, user *models.UserInfo) error {
 	return c.JSON(http.StatusOK, models.BaseResponse{
 		Status:  "success",
 		Message: "user deleted successfully",
+	})
+}
+
+// ImportPlexUsers imports Plex users into the database (admin only)
+func (h *V1) ImportPlexUsers(c echo.Context) error {
+	var req ImportPlexUsersRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
+
+	// Fetch users from Plex API
+	plexUsers, err := h.services.Plex.GetUsers(c.Request().Context())
+	if err != nil {
+		slog.Error("Failed to fetch Plex users from API", "error", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users from Plex API")
+	}
+	userMap := make(map[int]plex.PlexUser)
+	for _, plexUser := range plexUsers {
+		userMap[plexUser.ID] = plexUser
+	}
+
+	// Iterate over Plex users and insert them into the database
+	for _, plexUser := range plexUsers {
+		if !req.ImportAll && !h.services.Plex.CheckUserHasAccess(userMap, plexUser.ID) {
+			continue // Skip users without library access if ImportAll is false
+		}
+
+		// Check if user already exists in the database
+		existingUser, err := db.DB.GetPlexUserByEmail(c.Request().Context(), plexUser.Email)
+		if err != nil && err != sql.ErrNoRows {
+			slog.Error("Failed to check existing user", "error", err, "email", plexUser.Email)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check existing user")
+		}
+
+		// If user does not exist, insert into the database
+		if existingUser == nil {
+			newUser := models.PlexUser{
+				ID:       plexUser.ID,
+				Email:    plexUser.Email,
+				Username: plexUser.Username,
+				IsAdmin:  plexUser.ID == config.C.Plex.AdminUserID,
+				UUID:     uuid.NewString(),
+			}
+			if err := db.DB.SavePlexUser(c.Request().Context(), newUser); err != nil {
+				slog.Error("Failed to insert Plex user", "error", err, "email", plexUser.Email)
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert Plex user")
+			}
+		}
+	}
+
+	return c.JSON(http.StatusOK, models.BaseResponse{
+		Status:  "success",
+		Message: "Plex users imported successfully",
 	})
 }

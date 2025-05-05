@@ -9,6 +9,8 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Replace static imports with lazy loaded components
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -23,51 +25,54 @@ const OnboardingWizardPage = lazy(() => import("./pages/OnboardingWizardPage"));
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/login-success" element={<LoginSuccessPage />} />
-            <Route
-              path="/subscription-success"
-              element={<StripeSuccessPage type="Subscription" />}
-            />
-            <Route
-              path="/subscription-cancel"
-              element={<StripeCancelPage type="Subscription" />}
-            />
-            <Route
-              path="/donation-success"
-              element={<StripeSuccessPage type="Donation" />}
-            />
-            <Route
-              path="/donation-cancel"
-              element={<StripeCancelPage type="Donation" />}
-            />
-            <Route
-              path="/onboarding"
-              element={<Navigate to="/onboarding/step/0" replace />}
-            />
-            <Route
-              path="/onboarding/step/:step"
-              element={<OnboardingWizardPage />}
-            />
-            <Route path="/claim" element={<ClaimCodePage />} />
-            <Route path="/claim/:code" element={<ClaimCodePage />} />
+    <>
+      <ToastContainer position="bottom-right" />
+      <AuthProvider>
+        <Router>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login-success" element={<LoginSuccessPage />} />
+              <Route
+                path="/subscription-success"
+                element={<StripeSuccessPage type="Subscription" />}
+              />
+              <Route
+                path="/subscription-cancel"
+                element={<StripeCancelPage type="Subscription" />}
+              />
+              <Route
+                path="/donation-success"
+                element={<StripeSuccessPage type="Donation" />}
+              />
+              <Route
+                path="/donation-cancel"
+                element={<StripeCancelPage type="Donation" />}
+              />
+              <Route
+                path="/onboarding"
+                element={<Navigate to="/onboarding/step/0" replace />}
+              />
+              <Route
+                path="/onboarding/step/:step"
+                element={<OnboardingWizardPage />}
+              />
+              <Route path="/claim" element={<ClaimCodePage />} />
+              <Route path="/claim/:code" element={<ClaimCodePage />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/subscriptions" element={<SubscriptionsPage />} />
-            </Route>
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/subscriptions" element={<SubscriptionsPage />} />
+              </Route>
 
-            <Route element={<AdminRoute />}>
-              <Route path="/admin/*" element={<AdminDashboardPage />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </Router>
-    </AuthProvider>
+              <Route element={<AdminRoute />}>
+                <Route path="/admin/*" element={<AdminDashboardPage />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </Router>
+      </AuthProvider>
+    </>
   );
 }
 

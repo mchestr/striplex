@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 function UserListPage({ onViewUserDetails }) {
   const [users, setUsers] = useState([]);
@@ -9,6 +10,9 @@ function UserListPage({ onViewUserDetails }) {
   const [userToDelete, setUserToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [importAll, setImportAll] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -68,22 +72,48 @@ function UserListPage({ onViewUserDetails }) {
     setDeleteError(null);
   };
 
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const totalUsers = users.length;
+
   return (
     <div className="bg-[#2d3436] rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Plex Users</h2>
+        <h2 className="text-2xl font-bold">Plex Users ({totalUsers})</h2>
         <div className="flex gap-2">
           <button
             onClick={fetchUsers}
             className="bg-[#4b6bfb] hover:bg-[#3b5beb] text-white py-2 px-4 rounded-lg transition-colors"
           >
             Refresh
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
+          >
+            Import Users
           </button>
         </div>
       </div>
@@ -111,20 +141,45 @@ function UserListPage({ onViewUserDetails }) {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-[#1e272e]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  User
+                <th
+                  onClick={() => handleSort("username")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                >
+                  User{" "}
+                  {sortConfig.key === "username" &&
+                    (sortConfig.direction === "asc" ? "▲" : "▼")}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Email
+                <th
+                  onClick={() => handleSort("email")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                >
+                  Email{" "}
+                  {sortConfig.key === "email" &&
+                    (sortConfig.direction === "asc" ? "▲" : "▼")}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Admin
+                <th
+                  onClick={() => handleSort("is_admin")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                >
+                  Admin{" "}
+                  {sortConfig.key === "is_admin" &&
+                    (sortConfig.direction === "asc" ? "▲" : "▼")}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Access
+                <th
+                  onClick={() => handleSort("has_access")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                >
+                  Access{" "}
+                  {sortConfig.key === "has_access" &&
+                    (sortConfig.direction === "asc" ? "▲" : "▼")}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Created
+                <th
+                  onClick={() => handleSort("created_at")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                >
+                  Created{" "}
+                  {sortConfig.key === "created_at" &&
+                    (sortConfig.direction === "asc" ? "▲" : "▼")}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Actions
@@ -132,8 +187,8 @@ function UserListPage({ onViewUserDetails }) {
               </tr>
             </thead>
             <tbody className="bg-[#2d3436] divide-y divide-gray-700">
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
+              {sortedUsers.length > 0 ? (
+                sortedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-[#3a4149]">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">
@@ -246,6 +301,66 @@ function UserListPage({ onViewUserDetails }) {
                 ) : (
                   "Delete User"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Users Confirmation Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#2d3436] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-xl font-semibold mb-4 text-white">
+              Confirm Import
+            </h3>
+            <p className="mb-6 text-gray-300">
+              Do you want to import all users? Check the box below to confirm.
+            </p>
+            <div className="flex items-center gap-2 mb-6">
+              <input
+                type="checkbox"
+                id="importAll"
+                checked={importAll}
+                onChange={(e) => setImportAll(e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+              />
+              <label htmlFor="importAll" className="text-sm text-gray-300">
+                Import All Users
+              </label>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/v1/plex/users/import", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({ import_all: importAll }),
+                    });
+                    if (!response.ok) {
+                      throw new Error("Failed to import users");
+                    }
+                    toast.success("Users imported successfully!");
+                    fetchUsers(); // Refresh the user list
+                  } catch (err) {
+                    console.error("Error importing users:", err);
+                    toast.error("Error importing users: " + err.message);
+                  } finally {
+                    setIsModalOpen(false);
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white transition-colors"
+              >
+                Confirm
               </button>
             </div>
           </div>

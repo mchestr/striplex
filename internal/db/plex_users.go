@@ -11,7 +11,7 @@ func (db *sqlDB) SavePlexUser(ctx context.Context, user models.PlexUser) error {
     INSERT INTO plex_users(id, uuid, username, email, is_admin)
     VALUES($1, $2, $3, $4, $5)
     ON CONFLICT(id) DO UPDATE SET
-        uuid = EXCLUDED.uuid,
+        uuid = $2,
         username = EXCLUDED.username,
         email = EXCLUDED.email,
         is_admin = EXCLUDED.is_admin,
