@@ -77,7 +77,10 @@ const WelcomeStep = ({ onNext, serverInfo }) => {
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Create a watchlist for content you want to enjoy later</li>
             <li>Check for device-specific apps for the best experience</li>
-            <li>Adjust video quality settings based on your internet speed</li>
+            <li>
+              Configure playback settings to use the maximum (original) quality
+              for an optimal viewing experience and to minimize server load.
+            </li>
             <li>
               Visit the{" "}
               <a

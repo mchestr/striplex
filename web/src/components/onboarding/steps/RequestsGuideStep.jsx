@@ -19,16 +19,22 @@ const RequestsGuideStep = ({ onNext, onPrev, serverInfo, nextStepName }) => {
           <p>Limits are reset weekly and will increase with more watch time.</p>
         </div>
 
+        <img
+          src="https://github.com/fallenbagel/jellyseerr/blob/cf9c33d124e499665b1fbfcdf192d956adf24991/public/preview.jpg?raw=true"
+          alt="Jellyseerr Screenshot"
+          className="mt-6 rounded-lg shadow-lg border border-gray-700"
+        />
+
         {serverInfo.isLoading ? (
           <div className="mt-4 text-gray-400">Loading requests link...</div>
         ) : (
           <a
             href={serverInfo.requestsUrl}
-            className="inline-block mt-4 px-5 py-2 bg-[#5C7CFA] hover:bg-[#4B6BFB] text-white rounded-lg transition-colors"
+            className="inline-block mt-4 px-5 py-2 bg-[#6C63FF] hover:bg-[#5A52E6] text-white font-medium text-base rounded-md shadow-sm hover:shadow-md transition-all duration-200"
             target="_blank"
             rel="noreferrer"
           >
-            Open Requests Portal
+            Request New Content
           </a>
         )}
       </div>
