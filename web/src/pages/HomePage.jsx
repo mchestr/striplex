@@ -134,19 +134,37 @@ function HomePage() {
 
         <div className="space-y-4 mb-6">
           {hasPlexAccess && (
-            <button
-              onClick={() => navigate("/onboarding")}
-              className="w-full flex items-center justify-center bg-[#27ae60] hover:bg-[#2ecc71] text-white font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
-            >
-              Onboarding Guide
-            </button>
+            <>
+              <button
+                onClick={() =>
+                  window.open("https://app.plex.tv/desktop", "_blank")
+                }
+                className="w-full flex items-center justify-center bg-[#E5A00D] hover:bg-[#D4940C] text-[#191A1C] font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg gap-3"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+                Watch Now
+              </button>
+              <button
+                onClick={() => navigate("/onboarding")}
+                className="w-full flex items-center justify-center bg-[#34495e] hover:bg-[#2c3e50] text-white font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-base"
+              >
+                Onboarding Guide
+              </button>
+            </>
           )}
 
           {hasSubscriptions ? (
             // Show subscription management button for users with subscriptions
             <button
               onClick={() => navigate("/subscriptions")}
-              className="w-full flex items-center justify-center bg-[#2c3e50] hover:bg-[#34495e] text-[#f1f2f6] font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
+              className="w-full flex items-center justify-center bg-[#34495e] hover:bg-[#2c3e50] text-white font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-base"
             >
               Manage Subscriptions
             </button>
