@@ -2,20 +2,14 @@ package server
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"plefi/internal/config"
 	"plefi/internal/controllers"
 	"plefi/internal/services"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo-contrib/session"
 
 	"github.com/labstack/echo/v4"
@@ -78,23 +72,6 @@ func NewRouter(svcs *services.Services, client *http.Client) *echo.Echo {
 	// Initialize controllers
 	appController := controllers.NewAppController(client, svcs)
 	appController.GetRoutes(e)
-
-	if config.C.Metrics.Enabled {
-		slog.Info("Metrics enabled", "path", config.C.Metrics.Path, "port", config.C.Metrics.Port)
-		e.Use(echoprometheus.NewMiddleware("plefi"))
-
-		if strings.Contains(config.C.Server.Address, strconv.Itoa(config.C.Metrics.Port)) {
-			e.GET(config.C.Metrics.Path, echoprometheus.NewHandler())
-		} else {
-			go func() {
-				metrics := echo.New()
-				metrics.GET(config.C.Metrics.Path, echoprometheus.NewHandler())
-				if err := metrics.Start(fmt.Sprintf(":%d", config.C.Metrics.Port)); err != nil && !errors.Is(err, http.ErrServerClosed) {
-					log.Fatal(err)
-				}
-			}()
-		}
-	}
 
 	// Sort routes by path before logging
 	routes := e.Routes()

@@ -40,18 +40,11 @@ type AppConfig struct {
 	Database         DatabaseConfig
 	Debug            bool
 	OnboardingConfig OnboardingConfig
-	Metrics          MetricsConfig
 }
 
 type AuthConfig struct {
 	SessionSecret Secret
 	SessionName   string
-}
-
-type MetricsConfig struct {
-	Enabled bool
-	Path    string
-	Port    int
 }
 
 type ServerConfig struct {
@@ -147,9 +140,6 @@ func setDefaults(config *viper.Viper) {
 	config.SetDefault("auth.session_name", "plefi_session")
 	config.SetDefault("debug", false)
 	config.SetDefault("database.migrations_path", filepath.Join(filepath.Dir(b), "../../migrations"))
-	config.SetDefault("metrics.enabled", false)
-	config.SetDefault("metrics.path", "/metrics")
-	config.SetDefault("metrics.port", 8081)
 }
 
 func generateConfig(config *viper.Viper) {
@@ -200,11 +190,6 @@ func generateConfig(config *viper.Viper) {
 			RequestsUrl:      config.GetString("onboarding.requests_url"),
 			ServerName:       config.GetString("onboarding.server_name"),
 			DiscordServerUrl: config.GetString("onboarding.discord_server_url"),
-		},
-		Metrics: MetricsConfig{
-			Enabled: config.GetBool("metrics.enabled"),
-			Path:    config.GetString("metrics.path"),
-			Port:    config.GetInt("metrics.port"),
 		},
 	}
 	if C.Debug {

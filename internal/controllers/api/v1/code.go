@@ -58,12 +58,12 @@ type ClaimInviteCodeResponse struct {
 }
 
 // generateRandomCode creates a random invite code of specified length
-func generateRandomCode(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+func generateRandomCode() string {
+	const charset = "ABCDEFGHJKMNPQRSTUVWXYZ" // Exclude O, I, L
 	var sb strings.Builder
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	for i := 0; i < length; i++ {
+	for i := 0; i < 6; i++ {
 		sb.WriteByte(charset[r.Intn(len(charset))])
 	}
 
@@ -81,7 +81,7 @@ func (h *V1) CreateInviteCode(c echo.Context) error {
 
 	// Generate random code if not provided
 	if req.Code == "" {
-		req.Code = generateRandomCode(8) // Generate an 8-character code
+		req.Code = generateRandomCode() // Generate an 8-character code
 	}
 
 	// Validation
