@@ -11,6 +11,14 @@ function HomePage() {
   const [serverName, setServerName] = useState(serverInfo.serverName);
   const navigate = useNavigate();
   const [hasAdmin, setHasAdmin] = useState(user.is_admin || false);
+  const [subscriptionsEnabled, setSubscriptionsEnabled] = useState(false);
+
+  useEffect(() => {
+    // Check if subscriptions feature is enabled
+    if (serverInfo && Array.isArray(serverInfo.features)) {
+      setSubscriptionsEnabled(serverInfo.features.includes("subscriptions"));
+    }
+  }, [serverInfo]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -151,39 +159,46 @@ function HomePage() {
             </>
           )}
 
-          {hasSubscriptions ? (
-            // Show subscription management button for users with subscriptions
-            <button
-              onClick={() => navigate("/subscriptions")}
-              className="w-full flex items-center justify-center bg-[#34495e] hover:bg-[#2c3e50] text-white font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-base"
-            >
-              Manage Subscriptions
-            </button>
-          ) : !hasPlexAccess ? (
-            <>
+          <>
+            {hasSubscriptions ? (
+              // Show subscription management button for users with subscriptions
               <button
-                onClick={() => navigate("/claim")}
-                className="w-full flex items-center justify-center bg-[#E5A00D] hover:bg-[#D4940C] text-[#191A1C] font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
+                onClick={() => navigate("/subscriptions")}
+                className="w-full flex items-center justify-center bg-[#34495e] hover:bg-[#2c3e50] text-white font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-base"
               >
-                Claim Code
+                Manage Subscriptions
               </button>
+            ) : !hasPlexAccess ? (
+              <>
+                <button
+                  onClick={() => navigate("/claim")}
+                  className="w-full flex items-center justify-center bg-[#E5A00D] hover:bg-[#D4940C] text-[#191A1C] font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
+                >
+                  Claim Code
+                </button>
+                {subscriptionsEnabled && (
+                  <>
+                    <div className="flex items-center my-3">
+                      <div className="flex-grow h-px bg-gray-600"></div>
+                      <span className="px-3 text-gray-400 text-sm font-medium">
+                        OR
+                      </span>
+                      <div className="flex-grow h-px bg-gray-600"></div>
+                    </div>
 
-              <div className="flex items-center my-3">
-                <div className="flex-grow h-px bg-gray-600"></div>
-                <span className="px-3 text-gray-400 text-sm font-medium">
-                  OR
-                </span>
-                <div className="flex-grow h-px bg-gray-600"></div>
-              </div>
-
-              <button
-                onClick={() => (window.location.href = "/stripe/subscribe")}
-                className="w-full flex items-center justify-center bg-[#2d6a4f] hover:bg-[#1b4332] text-white font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
-              >
-                Subscribe Now
-              </button>
-            </>
-          ) : null}
+                    <button
+                      onClick={() =>
+                        (window.location.href = "/stripe/subscribe")
+                      }
+                      className="w-full flex items-center justify-center bg-[#2d6a4f] hover:bg-[#1b4332] text-white font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
+                    >
+                      Subscribe Now
+                    </button>
+                  </>
+                )}
+              </>
+            ) : null}
+          </>
         </div>
 
         {/* Sign out link - add more bottom margin when admin banner is shown */}
@@ -196,7 +211,7 @@ function HomePage() {
           </button>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

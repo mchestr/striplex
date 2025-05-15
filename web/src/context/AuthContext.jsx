@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
     serverName: "PleFi",
     discordServerUrl: "",
     requestsUrl: "",
+    features: [],
   });
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +28,7 @@ export const AuthProvider = ({ children }) => {
             serverName: serverData.server_name ?? "PleFi",
             discordServerUrl: serverData.discord_server_url ?? "",
             requestsUrl: serverData.requests_url ?? "",
+            features: serverData.features ?? [],
           });
         }
 

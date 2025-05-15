@@ -89,6 +89,7 @@ type OnboardingConfig struct {
 	RequestsUrl      string
 	ServerName       string
 	DiscordServerUrl string
+	Features         []string
 }
 
 // Init is an exported method that takes the environment starts the viper
@@ -190,6 +191,7 @@ func generateConfig(config *viper.Viper) {
 			RequestsUrl:      config.GetString("onboarding.requests_url"),
 			ServerName:       config.GetString("onboarding.server_name"),
 			DiscordServerUrl: config.GetString("onboarding.discord_server_url"),
+			Features:         config.GetStringSlice("onboarding.features"),
 		},
 	}
 	if C.Debug {

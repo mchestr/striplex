@@ -79,6 +79,7 @@ func (h AppController) Info(c echo.Context) error {
 		RequestsURL:      config.C.OnboardingConfig.RequestsUrl,
 		ServerName:       config.C.OnboardingConfig.ServerName,
 		DiscordServerUrl: config.C.OnboardingConfig.DiscordServerUrl,
+		Features:         config.C.OnboardingConfig.Features,
 	})
 	return echo.NewHTTPError(http.StatusOK, "ok")
 }
