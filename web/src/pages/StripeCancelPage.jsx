@@ -1,11 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Footer from "../components/Footer";
 
 function StripeCancelPage({ type }) {
   const navigate = useNavigate();
 
   return (
-    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen py-8 px-4">
+    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen py-8 px-4 flex flex-col items-center">
       <div className="max-w-3xl mx-auto text-center p-12 rounded-xl shadow-lg bg-[#2d3436] shadow-black/20 w-[90%] md:w-auto">
         <div className="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full text-4xl font-light bg-[#862e2e] text-[#ffc9c9]">
           ✕
@@ -47,6 +48,8 @@ function StripeCancelPage({ type }) {
           )}
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

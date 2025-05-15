@@ -2,6 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import OnboardingWizard from "../components/onboarding/OnboardingWizard";
 import { useAuth } from "../context/AuthContext";
+import Footer from "../components/Footer";
 
 function OnboardingWizardPage() {
   const { step } = useParams();
@@ -21,6 +22,8 @@ function OnboardingWizardPage() {
           <OnboardingWizard serverInfo={serverInfo} initialStep={step} />
         )}
       </div>
+      
+      <Footer />
     </div>
   );
 }

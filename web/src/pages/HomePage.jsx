@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Footer from "../components/Footer";
 
 function HomePage() {
   const { logout, user, serverInfo } = useAuth();
@@ -64,16 +65,6 @@ function HomePage() {
   return (
     <div className="font-sans bg-[#1e272e] text-[#f1f2f6] flex flex-col justify-center items-center min-h-screen overflow-x-hidden">
       <div className="bg-[#2d3436] shadow-lg shadow-black/20 p-8 md:p-12 rounded-xl text-center max-w-md w-[90%] relative">
-        {/* Coffee ribbon */}
-        <a
-          href="/stripe/donation"
-          className="absolute -right-2 -top-2 overflow-hidden w-28 h-28 z-10 cursor-pointer"
-        >
-          <div className="absolute transform rotate-45 bg-[#e5a00d]/80 text-[#191a1c] font-bold text-xs py-1 right-[-35px] top-[32px] w-[170px] text-center shadow-sm hover:bg-[#f5b82e]/80 transition-colors duration-200">
-            buy me a coffee ☕
-          </div>
-        </a>
-
         {/* Admin banner along the bottom */}
         {hasAdmin && (
           <a
@@ -205,6 +196,8 @@ function HomePage() {
           </button>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

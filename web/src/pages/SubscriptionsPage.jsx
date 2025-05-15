@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Footer from "../components/Footer";
 
 function SubscriptionsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -265,6 +266,8 @@ function SubscriptionsPage() {
           </button>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

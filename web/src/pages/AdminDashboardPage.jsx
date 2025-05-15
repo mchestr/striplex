@@ -11,6 +11,7 @@ import CodeListPage from "../components/admin/CodeListPage";
 import CodeDetailsPage from "../components/admin/CodeDetailsPage";
 import UserListPage from "../components/admin/UserListPage";
 import UserDetailsPage from "../components/admin/UserDetailsPage";
+import Footer from "../components/Footer";
 
 function AdminDashboardPage() {
   const [currentSection, setCurrentSection] = useState("codes");
@@ -161,8 +162,8 @@ function AdminDashboardPage() {
   };
 
   return (
-    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen">
-      <div className="flex flex-col md:flex-row">
+    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen flex flex-col">
+      <div className="flex flex-col md:flex-row flex-grow">
         {/* Sidebar */}
         <div className="bg-[#2d3436] w-full md:w-64 md:min-h-screen p-4">
           <div className="flex items-center justify-between md:justify-start mb-8">
@@ -252,6 +253,8 @@ function AdminDashboardPage() {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

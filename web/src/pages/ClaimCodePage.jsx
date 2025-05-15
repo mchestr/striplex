@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import PlexSignInButton from "../components/PlexSignInButton";
 import { useAuth } from "../context/AuthContext";
+import Footer from "../components/Footer";
 
 function ClaimCodePage() {
   const { user, refreshUser, serverInfo } = useAuth();
@@ -261,6 +262,8 @@ function ClaimCodePage() {
           </button>
         </div>
       </div>
+      
+      <Footer />
       <style jsx>{`
         @keyframes scale-in {
           0% {

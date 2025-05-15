@@ -1,13 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Footer from "../components/Footer";
 
 function StripeSuccessPage({ type }) {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   return (
-    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen py-8 px-4">
+    <div className="font-sans bg-[#1e272e] text-[#f1f2f6] min-h-screen py-8 px-4 flex flex-col items-center">
       <div className="max-w-3xl mx-auto text-center p-12 rounded-xl shadow-lg bg-[#2d3436] shadow-black/20">
         <div
           className={`flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full text-4xl font-light bg-[#2b8a3e] text-[#e3f9e5]`}
@@ -80,6 +81,8 @@ function StripeSuccessPage({ type }) {
           )}
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

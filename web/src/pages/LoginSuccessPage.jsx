@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Footer from "../components/Footer";
 
 const LoginSuccessPage = () => {
   const [countdown, setCountdown] = useState(5);
@@ -63,6 +64,8 @@ const LoginSuccessPage = () => {
           {countdown !== 1 ? "s" : ""}.
         </p>
       </div>
+      
+      <Footer />
     </div>
   );
 };
