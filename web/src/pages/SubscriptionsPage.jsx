@@ -123,7 +123,7 @@ function SubscriptionsPage() {
         <div className="text-xl text-red-500">{error}</div>
         <button
           onClick={() => navigate("/")}
-          className="mt-4 px-4 py-2 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] rounded-md"
+          className="mt-4 px-4 py-2 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
         >
           Return Home
         </button>
@@ -259,7 +259,7 @@ function SubscriptionsPage() {
         <div className="mt-6 flex flex-col items-center">
           <button
             onClick={() => navigate("/")}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-[#f1f2f6] rounded-md"
+            className="px-4 py-2 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
           >
             Return Home
           </button>

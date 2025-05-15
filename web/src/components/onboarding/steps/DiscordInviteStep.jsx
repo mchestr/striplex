@@ -12,7 +12,7 @@ const DiscordInviteStep = ({ onNext, onPrev, serverInfo, nextStepName }) => {
 
         <a
           href={serverInfo.discordServerUrl}
-          className="inline-block mt-4 px-5 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-lg transition-colors"
+          className="inline-block mt-4 px-5 py-2 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
           target="_blank"
           rel="noreferrer"
         >
@@ -29,7 +29,7 @@ const DiscordInviteStep = ({ onNext, onPrev, serverInfo, nextStepName }) => {
         </button>
         <button
           onClick={onNext}
-          className="px-5 py-2 bg-[#4b6bfb] hover:bg-[#3557fa] text-white rounded-lg transition-colors"
+          className="px-5 py-2 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
         >
           Next: {nextStepName}
         </button>

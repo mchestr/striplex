@@ -99,7 +99,7 @@ const WelcomeStep = ({ onNext, serverInfo }) => {
 
       <button
         onClick={onNext}
-        className="w-full py-3 bg-[#4b6bfb] hover:bg-[#3557fa] text-white font-medium rounded-lg transition-colors"
+        className="w-full py-3.5 px-8 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
       >
         Get Started
       </button>

@@ -55,7 +55,7 @@ function StripeSuccessPage({ type }) {
           {type === "Donation" ? (
             <button
               onClick={() => navigate("/")}
-              className="px-7 py-3 bg-[#4b6bfb] hover:bg-[#3557fa] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
+              className="px-7 py-3 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
             >
               Return Home
             </button>
@@ -63,7 +63,7 @@ function StripeSuccessPage({ type }) {
             <>
               <button
                 onClick={() => navigate("/onboarding")}
-                className="px-7 py-3 bg-[#4b6bfb] hover:bg-[#3557fa] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
+                className="px-7 py-3 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
               >
                 Get Started
               </button>
@@ -72,7 +72,7 @@ function StripeSuccessPage({ type }) {
                 href="https://app.plex.tv/desktop/#!/settings/manage-library-access"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-7 py-3 bg-[#ffb142] hover:bg-[#ff9f1a] text-white font-bold rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
+                className="px-7 py-3 bg-[#34495e] hover:bg-[#2c3e50] text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
               >
                 Check Plex Requests
               </a>

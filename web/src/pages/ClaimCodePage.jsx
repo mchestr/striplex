@@ -130,23 +130,9 @@ function ClaimCodePage() {
 
     return (
       <div className="mb-6 text-center">
-        <div className="inline-block p-2 px-4 bg-[#1e272e] rounded-lg border border-gray-700">
-          <div className="flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2 text-[#4b6bfb]"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="font-medium text-lg">{serverInfo.serverName}</span>
-          </div>
-        </div>
+        <h1 className="text-4xl md:text-[3.5rem] font-extrabold tracking-tight text-[#f1f2f6] leading-tight">
+          {serverInfo.serverName}
+        </h1>
       </div>
     );
   };
@@ -201,7 +187,6 @@ function ClaimCodePage() {
     return (
       <>
         <ServerNameHeader />
-        <h1 className="text-3xl font-bold mb-6">Claim Your Code</h1>
 
         {message && (
           <div
@@ -216,35 +201,46 @@ function ClaimCodePage() {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-6">
+          <div className="mb-6 relative">
             <label
               htmlFor="code"
               className="block text-sm font-medium text-gray-300 mb-1"
             >
               Enter Invite Code
             </label>
-            <input
-              id="code"
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full p-3 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your code"
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <input
+                id="code"
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="w-full p-3 pr-12 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
+                disabled={isSubmitting}
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-full ${
+                  isSubmitting
+                    ? "bg-[#3a4149] text-gray-500"
+                    : "bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c]"
+                } transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full flex items-center justify-center ${
-              isSubmitting
-                ? "bg-[#4b6bfb]/50"
-                : "bg-[#4b6bfb] hover:bg-[#3557fa]"
-            } text-white font-medium py-3 px-4 rounded-lg focus:outline-none transition-colors`}
-          >
-            {isSubmitting ? "Claiming..." : "Claim Code"}
-          </button>
         </form>
       </>
     );

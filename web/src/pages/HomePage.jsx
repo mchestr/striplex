@@ -128,8 +128,8 @@ function HomePage() {
 
         <p className="text-lg mb-8 text-[#f1f2f6]">
           {hasPlexAccess === true
-            ? "You have access to Plex content."
-            : "You do not have access to Plex content."}
+            ? "You have access."
+            : "You do not have access."}
         </p>
 
         <div className="space-y-4 mb-6">
@@ -171,16 +171,25 @@ function HomePage() {
           ) : !hasPlexAccess ? (
             <>
               <button
-                onClick={() => (window.location.href = "/stripe/subscribe")}
-                className="w-full flex items-center justify-center bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold py-3.5 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 text-lg"
-              >
-                Subscribe Now
-              </button>
-              <button
                 onClick={() => navigate("/claim")}
-                className="w-full flex items-center justify-center bg-[#4b6bfb] hover:bg-[#3557fa] text-white font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
+                className="w-full flex items-center justify-center bg-[#E5A00D] hover:bg-[#D4940C] text-[#191A1C] font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-lg"
               >
                 Claim Code
+              </button>
+
+              <div className="flex items-center my-3">
+                <div className="flex-grow h-px bg-gray-600"></div>
+                <span className="px-3 text-gray-400 text-sm font-medium">
+                  OR
+                </span>
+                <div className="flex-grow h-px bg-gray-600"></div>
+              </div>
+
+              <button
+                onClick={() => (window.location.href = "/stripe/subscribe")}
+                className="w-full flex items-center justify-center bg-[#2d6a4f] hover:bg-[#1b4332] text-white font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
+              >
+                Subscribe Now
               </button>
             </>
           ) : null}

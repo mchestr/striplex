@@ -30,7 +30,7 @@ const RequestsGuideStep = ({ onNext, onPrev, serverInfo, nextStepName }) => {
         ) : (
           <a
             href={serverInfo.requestsUrl}
-            className="inline-block mt-4 px-5 py-2 bg-[#6C63FF] hover:bg-[#5A52E6] text-white font-medium text-base rounded-md shadow-sm hover:shadow-md transition-all duration-200"
+            className="inline-block mt-4 px-5 py-2 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
             target="_blank"
             rel="noreferrer"
           >
@@ -48,7 +48,7 @@ const RequestsGuideStep = ({ onNext, onPrev, serverInfo, nextStepName }) => {
         </button>
         <button
           onClick={onNext}
-          className="px-5 py-2 bg-[#4b6bfb] hover:bg-[#3557fa] text-white rounded-lg transition-colors"
+          className="px-5 py-2 bg-[#e5a00d] hover:bg-[#f5b82e] text-[#191a1c] font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
         >
           Next: {nextStepName}
         </button>
