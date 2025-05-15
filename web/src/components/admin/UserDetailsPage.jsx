@@ -11,6 +11,11 @@ function UserDetailsPage({ userId, onBack }) {
   const [plexAccess, setPlexAccess] = useState(null);
   const [isGranting, setIsGranting] = useState(false);
   const [grantError, setGrantError] = useState(null);
+  const [notes, setNotes] = useState("");
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [notesError, setNotesError] = useState(null);
+  const [notesSuccess, setNotesSuccess] = useState(false);
+  const [isNotesExpanded, setIsNotesExpanded] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -30,6 +35,8 @@ function UserDetailsPage({ userId, onBack }) {
 
       const userData = await userResponse.json();
       setUser(userData.user);
+      // Initialize notes from user data
+      setNotes(userData.user.notes || "");
 
       // Fetch user's Plex access status
       const accessResponse = await fetch(`/api/v1/plex/users/${userId}/access`);
@@ -104,6 +111,42 @@ function UserDetailsPage({ userId, onBack }) {
       console.error("Error granting access:", err);
     } finally {
       setIsGranting(false);
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    setIsSavingNotes(true);
+    setNotesError(null);
+    setNotesSuccess(false);
+
+    try {
+      const response = await fetch("/api/v1/plex/users/notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: parseInt(userId, 10), // Convert userId to integer
+          notes: notes,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save notes");
+      }
+
+      setNotesSuccess(true);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setNotesSuccess(false);
+      }, 3000);
+    } catch (err) {
+      setNotesError(err.message);
+      console.error("Error saving notes:", err);
+    } finally {
+      setIsSavingNotes(false);
     }
   };
 
@@ -403,8 +446,9 @@ function UserDetailsPage({ userId, onBack }) {
           )}
         </div>
       </div>
+      
       {!user.is_admin && (
-        <div className="bg-[#3a4149] p-6 rounded-lg">
+        <div className="bg-[#3a4149] p-6 rounded-lg mb-6">
           <h3 className="text-lg font-semibold mb-4 text-white">Actions</h3>
           <div className="flex flex-wrap gap-3">
             {plexAccess ? (
@@ -439,6 +483,116 @@ function UserDetailsPage({ userId, onBack }) {
           )}
         </div>
       )}
+
+      {/* Admin Notes Section - Moved to bottom */}
+      <div className="bg-[#3a4149] rounded-lg overflow-hidden transition-all duration-300 ease-in-out">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700 cursor-pointer" 
+            onClick={() => setIsNotesExpanded(!isNotesExpanded)}>
+          <h3 className="text-lg font-semibold text-white flex items-center">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              ></path>
+            </svg>
+            Admin Notes
+          </h3>
+          <div className="flex items-center">
+            {notesSuccess && (
+              <div className="text-green-400 text-sm mr-3 flex items-center">
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                Saved
+              </div>
+            )}
+            <svg
+              className={`w-5 h-5 transform transition-transform ${isNotesExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        
+        {isNotesExpanded && (
+          <div className="p-4">
+            <div className="mb-3">
+              <textarea
+                className="w-full h-32 bg-[#2d3436] text-white border border-gray-700 rounded-lg p-3 focus:border-blue-500 focus:outline-none resize-none"
+                placeholder="Add notes about this user here..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              ></textarea>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <div>
+                {notesError && (
+                  <div className="text-red-400 text-sm">Error: {notesError}</div>
+                )}
+              </div>
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+                onClick={handleSaveNotes}
+                disabled={isSavingNotes}
+              >
+                {isSavingNotes ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                      ></path>
+                    </svg>
+                    Save Notes
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Revoke Access Confirmation Modal */}
       {isRevokeModalOpen && (

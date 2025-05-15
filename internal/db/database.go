@@ -37,6 +37,7 @@ type Database interface {
 	GetPlexUserByEmail(ctx context.Context, email string) (*models.PlexUser, error)
 	GetAllPlexUsers(ctx context.Context) ([]models.PlexUser, error)
 	DeletePlexUser(ctx context.Context, userID int) error
+	UpdateUserNotes(ctx context.Context, userID int, notes string) error
 
 	// Plex User Invite operations
 	AssociatePlexUserWithInviteCode(ctx context.Context, userID, inviteCodeID int) error
@@ -68,17 +69,17 @@ func (db *sqlDB) Migrate(ctx context.Context) error {
 	slog.Info("Running database migrations", "driver", db.driver, "path", migrationsPath)
 	switch db.driver {
 	case "postgres":
-		driver, err := postgres.WithInstance(db.conn, &postgres.Config{})
-		if err != nil {
-			return fmt.Errorf("failed to create postgres driver: %w", err)
+		driver, driverErr := postgres.WithInstance(db.conn, &postgres.Config{})
+		if driverErr != nil {
+			return fmt.Errorf("failed to create postgres driver: %w", driverErr)
 		}
 		instance, err = migrate.NewWithDatabaseInstance(
 			"file://"+migrationsPath,
 			"postgres", driver)
 	case "sqlite3":
-		driver, err := sqlite3.WithInstance(db.conn, &sqlite3.Config{})
-		if err != nil {
-			return fmt.Errorf("failed to create sqlite3 driver: %w", err)
+		driver, driverErr := sqlite3.WithInstance(db.conn, &sqlite3.Config{})
+		if driverErr != nil {
+			return fmt.Errorf("failed to create sqlite3 driver: %w", driverErr)
 		}
 		instance, err = migrate.NewWithDatabaseInstance(
 			"file://"+migrationsPath,

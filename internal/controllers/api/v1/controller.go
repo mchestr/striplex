@@ -48,6 +48,7 @@ func (v *V1) GetRoutes(r *echo.Group) {
 			admin.GET("/:id/access", v.CheckServerAccess)
 			admin.POST("/import", v.ImportPlexUsers)
 			admin.POST("/access", v.GrantPlexAccess)
+			admin.POST("/notes", v.SetUserNotes) // New endpoint for setting user notes
 			admin.DELETE("/:id", middleware.UserHandler(v.DeletePlexUser))
 			admin.DELETE("/:id/access", v.RevokePlexAccess)
 		}
