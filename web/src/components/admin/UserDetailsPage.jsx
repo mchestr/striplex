@@ -446,7 +446,7 @@ function UserDetailsPage({ userId, onBack }) {
           )}
         </div>
       </div>
-      
+
       {!user.is_admin && (
         <div className="bg-[#3a4149] p-6 rounded-lg mb-6">
           <h3 className="text-lg font-semibold mb-4 text-white">Actions</h3>
@@ -486,8 +486,10 @@ function UserDetailsPage({ userId, onBack }) {
 
       {/* Admin Notes Section - Moved to bottom */}
       <div className="bg-[#3a4149] rounded-lg overflow-hidden transition-all duration-300 ease-in-out">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700 cursor-pointer" 
-            onClick={() => setIsNotesExpanded(!isNotesExpanded)}>
+        <div
+          className="flex items-center justify-between p-4 border-b border-gray-700 cursor-pointer"
+          onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+        >
           <h3 className="text-lg font-semibold text-white flex items-center">
             <svg
               className="w-5 h-5 mr-2"
@@ -526,7 +528,9 @@ function UserDetailsPage({ userId, onBack }) {
               </div>
             )}
             <svg
-              className={`w-5 h-5 transform transition-transform ${isNotesExpanded ? 'rotate-180' : ''}`}
+              className={`w-5 h-5 transform transition-transform ${
+                isNotesExpanded ? "rotate-180" : ""
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -541,7 +545,7 @@ function UserDetailsPage({ userId, onBack }) {
             </svg>
           </div>
         </div>
-        
+
         {isNotesExpanded && (
           <div className="p-4">
             <div className="mb-3">
@@ -552,11 +556,13 @@ function UserDetailsPage({ userId, onBack }) {
                 onChange={(e) => setNotes(e.target.value)}
               ></textarea>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <div>
                 {notesError && (
-                  <div className="text-red-400 text-sm">Error: {notesError}</div>
+                  <div className="text-red-400 text-sm">
+                    Error: {notesError}
+                  </div>
                 )}
               </div>
               <button
