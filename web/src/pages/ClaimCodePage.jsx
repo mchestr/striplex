@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 function ClaimCodePage() {
   const { user, refreshUser, serverInfo } = useAuth();
   const [code, setCode] = useState("");
+  const [codeInPath, setCodeInPath] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
@@ -37,6 +38,7 @@ function ClaimCodePage() {
     // If the last segment exists and isn't just 'claim-code', set it as the code
     if (codeFromPath && codeFromPath !== "claim") {
       setCode(codeFromPath);
+      setCodeInPath(true);
     }
     setCurrentStep(user ? 2 : 1);
   }, [location.pathname, user]);
@@ -203,12 +205,6 @@ function ClaimCodePage() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-6 relative">
-            <label
-              htmlFor="code"
-              className="block text-sm font-medium text-gray-300 mb-1"
-            >
-              Enter Invite Code
-            </label>
             <div className="relative">
               <input
                 id="code"
@@ -217,6 +213,7 @@ function ClaimCodePage() {
                 onChange={(e) => setCode(e.target.value)}
                 className="w-full p-3 pr-12 bg-[#3a4149] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500"
                 disabled={isSubmitting}
+                placeholder="Enter Invite Code"
               />
               <button
                 type="submit"
@@ -241,6 +238,35 @@ function ClaimCodePage() {
                 </svg>
               </button>
             </div>
+            {!codeInPath && (
+              <div className="mt-2 bg-[#34495e]/50 p-3 rounded-md text-sm text-gray-300">
+                <div className="flex items-start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-xs">
+                    The code can be found at the end of your invite.
+                    <div>
+                      <span className="text-blue-300 font-mono text-xs">
+                        {window.location.origin}/claim/
+                        <span className="text-yellow-300">CODE</span>
+                      </span>
+                    </div>
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </form>
       </>
@@ -262,7 +288,7 @@ function ClaimCodePage() {
           </button>
         </div>
       </div>
-      
+
       <Footer />
       <style jsx>{`
         @keyframes scale-in {
