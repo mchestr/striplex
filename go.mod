@@ -11,7 +11,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/spf13/viper v1.20.1
-	github.com/stripe/stripe-go/v82 v82.1.0
+	github.com/stripe/stripe-go/v82 v82.2.1
 	gorm.io/driver/postgres v1.5.11
 )
 
